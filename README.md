@@ -1,4 +1,4 @@
-## Idea
+## wave
 My project is a wavetable synthesizer that visually represents the mixing of different waveforms.
 The user is given a geometric shape. Each face of the shape represents a waveform.
 The position of the “cursor” adjusts the amplitude of each wave in the mix.
