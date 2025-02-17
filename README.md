@@ -38,6 +38,7 @@ To simplify the design, I will use the builtin HDMI and audio jack.
 
 <div align="center">
     <figure>
+        <br>
         <img src="doc/arch.png" alt="Architecture" width="500">
         <br>
         <figcaption>Fig 3. Architecture</figcaption>
@@ -46,6 +47,7 @@ To simplify the design, I will use the builtin HDMI and audio jack.
 
 <div align="center">
     <figure>
+        <br>
         <img src="doc/mk2_bkg.jpg" alt="Enclosure example" width="500">
         <br>
         <figcaption>Fig 4. Final enclosure design example (mine will be smaller)</figcaption>
