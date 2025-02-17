@@ -46,5 +46,4 @@ jobs:
           cmake --build .
       - name: Run Unit tests
         run: |
-          cd build
-          ctest --output-on-failure
+          ./build/unit_tests --verbose=1
