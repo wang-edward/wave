@@ -31,3 +31,32 @@ target_compile_definitions(wave PRIVATE PLATFORM_DESKTOP)
 
 # Link with raylib and required system libraries
 target_link_libraries(wave raylib m soundio pthread)
+
+
+# TEST
+enable_testing()
+
+# Define unit test sources
+set(TEST_SOURCES
+    tests/test_wavetable.c
+    tests/test_osc.c
+    tests/test_vec.c
+    src/osc.c
+    src/vec.c
+    src/wavetable.c
+)
+
+# Create an executable for unit tests
+add_executable(unit_tests ${TEST_SOURCES})
+
+# Include your project headers
+target_include_directories(unit_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+# If you need specific definitions (for instance, if raylib expects PLATFORM_DESKTOP)
+# target_compile_definitions(unit_tests PRIVATE PLATFORM_DESKTOP)
+
+# Link against the Criterion library and other system libraries
+target_link_libraries(unit_tests criterion m pthread)
+
+# Register the unit tests with CTest
+add_test(NAME unit_tests COMMAND unit_tests)

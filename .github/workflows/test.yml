@@ -46,8 +46,4 @@ jobs:
           cmake --build .
       - name: Run Unit tests
         run: |
-          gcc -o test \
-            tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
-            src/osc.c src/vec.c src/wavetable.c \
-            -lcriterion -lm -pthread
-          ./test
+          ctest --output-on-failure
