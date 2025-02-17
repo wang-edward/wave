@@ -32,7 +32,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install ccache libcriterion-dev libsoundio-dev \
-          libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+          libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev
         mkdir ~/.ccache
     - name: Cache
       uses: actions/cache@v4
