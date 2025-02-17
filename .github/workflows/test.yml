@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install ccache libcriterion-dev libsoundio-dev \
+          sudo apt install cmake ccache libcriterion-dev libsoundio-dev \
             libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev \
-            libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev cmake
+            libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev
           mkdir -p ~/.ccache
       - name: Cache
         uses: actions/cache@v4
@@ -42,15 +42,10 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          # Configure CMake; force use of ccache gcc and Debug build type
           cmake .. -DCMAKE_C_COMPILER="ccache gcc" -DCMAKE_BUILD_TYPE=Debug
           cmake --build .
       - name: Run Unit tests
         run: |
-          # If you have tests integrated as a CTest target, you can run:
-          # cd build && ctest --output-on-failure
-          #
-          # Otherwise, here's an example of compiling tests manually:
           gcc -o test \
             tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
             osc.c vec.c wavetable.c \
