@@ -18,6 +18,10 @@ void oscvec_push(OscVec *vec, struct Osc osc) {
 }
 
 void oscvec_destroy(OscVec *vec) {
+    // Free each oscillator's wavetable.
+    for (size_t i = 0; i < vec->size; i++) {
+        free(vec->data[i].wavetable);
+    }
     free(vec->data);
     free(vec);
 }

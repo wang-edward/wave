@@ -10,21 +10,11 @@
 #include "osc.h"
 #include "vec.h"
 
-// The wavetable holds one cycle of a sine wave.
-static float wavetable[TABLE_SIZE];
-
-// Precompute the wavetable.
-void init_wavetable(void) {
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        wavetable[i] = (float)sin(2.0 * M_PI * i / TABLE_SIZE);
-    }
-}
-
 // Global mutex to protect oscillator state.
 static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // The write callback: libsoundio calls this when it needs more audio samples.
-// Instead of a single oscillator, we now use an OscVec and mix all oscillator outputs.
+// We now mix the outputs from all oscillators, each using its own wavetable.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
     OscVec *osc_vec = (OscVec *)outstream->userdata;
     int frames_left = frame_count_max;
@@ -46,21 +36,23 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             pthread_mutex_lock(&osc_mutex);
             // Mix output from each oscillator.
             for (size_t i = 0; i < osc_vec->size; i++) {
-                double pos = osc_vec->data[i].phase;
+                struct Osc *osc = &osc_vec->data[i];
+                double pos = osc->phase;
                 int index0 = (int)pos;
                 int index1 = (index0 + 1) % TABLE_SIZE;
                 double frac = pos - index0;
-                float osc_sample = (float)((1.0 - frac) * wavetable[index0] + frac * wavetable[index1]);
+                // Use the oscillator's own wavetable.
+                float osc_sample = (float)((1.0 - frac) * osc->wavetable[index0] + frac * osc->wavetable[index1]);
                 sample += osc_sample;
 
                 // Increment phase and wrap around if necessary.
-                osc_vec->data[i].phase += osc_vec->data[i].phase_inc;
-                if (osc_vec->data[i].phase >= TABLE_SIZE)
-                    osc_vec->data[i].phase -= TABLE_SIZE;
+                osc->phase += osc->phase_inc;
+                if (osc->phase >= TABLE_SIZE)
+                    osc->phase -= TABLE_SIZE;
             }
             pthread_mutex_unlock(&osc_mutex);
 
-            // Average the sample if at least one oscillator exists.
+            // Average the mixed sample.
             if (osc_vec->size > 0)
                 sample /= osc_vec->size;
 
@@ -81,26 +73,26 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 }
 
 int main(int argc, char **argv) {
-    // Initialize the wavetable.
-    init_wavetable();
-
-    // Create an oscillator vector and add three oscillators.
+    // Create an oscillator vector.
     OscVec *osc_vec = oscvec_create(4);
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
     struct Osc temp;
 
-    // Oscillator 0
+    // Create oscillator 0.
     temp.phase = 0.0;
+    osc_init_wavetable(&temp);
     osc_set_freq(&temp, freq0);
     oscvec_push(osc_vec, temp);
 
-    // Oscillator 1
+    // Create oscillator 1.
     temp.phase = 0.0;
+    osc_init_wavetable(&temp);
     osc_set_freq(&temp, freq1);
     oscvec_push(osc_vec, temp);
 
-    // Oscillator 2
+    // Create oscillator 2.
     temp.phase = 0.0;
+    osc_init_wavetable(&temp);
     osc_set_freq(&temp, freq2);
     oscvec_push(osc_vec, temp);
 
@@ -171,7 +163,7 @@ int main(int argc, char **argv) {
     }
 
     // Initialize Raylib window.
-    InitWindow(480, 480, "Multiple Oscillators");
+    InitWindow(480, 480, "Multiple Oscillators with Individual Wavetables");
 
     while (!WindowShouldClose()) {
         BeginDrawing();
