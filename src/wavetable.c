@@ -1,4 +1,6 @@
 #include "wavetable.h"
+#include "config.h"
+#include "wavetable.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>

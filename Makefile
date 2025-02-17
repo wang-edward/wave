@@ -1,27 +1,40 @@
 # Compiler and flags
 CC      = gcc
-CFLAGS  = -Wall -Wextra -std=c99 -Iinclude -g
-LDFLAGS = -lm -lraylib -lsoundio -lpthread
+# Add Raylib include path along with your own include directory.
+CFLAGS  = -Wall -Wextra -Wno-error -std=c99 -Iinclude -isystem external/raylib/src -g -DDISABLE_WAYLAND -U DISABLE_X11 -DPLATFORM_DESKTOP -DGLFW_EXPOSE_NATIVE_X11 -DGLFW_MOUSE_PASSTHROUGH=0
+# Remove -lraylib since we'll compile it from source.
+LDFLAGS = -lm -lsoundio -lpthread
 
 # Directories and target
 SRC_DIR   = src
 BUILD_DIR = build
 TARGET    = wave
 
-# List all .c files in src, then compute object files in build
+# Project sources
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
+# Raylib sources (assumed to be in external/raylib/src)
+RAYLIB_DIR   = external/raylib
+RAYLIB_SRC   = $(RAYLIB_DIR)/src
+RAYLIB_SRCS  = $(wildcard $(RAYLIB_SRC)/*.c)
+# To avoid filename collisions, prefix Raylib object files with "raylib_"
+RAYLIB_OBJS  = $(patsubst $(RAYLIB_SRC)/%.c,$(BUILD_DIR)/raylib_%.o,$(RAYLIB_SRCS))
+
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(OBJS) $(RAYLIB_OBJS)
+	$(CC) $(OBJS) $(RAYLIB_OBJS) -o $(TARGET) $(LDFLAGS)
 
-# Rule: compile each .c file from src into a .o file in build.
+# Compile project source files.
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Create the build directory if it doesn't exist.
+# Compile Raylib source files.
+$(BUILD_DIR)/raylib_%.o: $(RAYLIB_SRC)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Create build directory if it doesn't exist.
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
