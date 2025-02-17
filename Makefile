@@ -1,7 +1,7 @@
 # Compiler and flags
 CC      = gcc
 # Add Raylib include path along with your own include directory.
-CFLAGS  = -Wall -Wextra -Wno-error -std=c99 -Iinclude -isystem external/raylib/src -g -DDISABLE_WAYLAND -U DISABLE_X11 -DPLATFORM_DESKTOP
+CFLAGS  = -Wall -Wextra -Wno-error -std=c99 -Iinclude -isystem external/raylib/src -g -DDISABLE_WAYLAND -U DISABLE_X11 -DPLATFORM_DESKTOP -DGLFW_EXPOSE_NATIVE_X11 -DGLFW_MOUSE_PASSTHROUGH=0
 # Remove -lraylib since we'll compile it from source.
 LDFLAGS = -lm -lsoundio -lpthread
 
