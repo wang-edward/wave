@@ -44,7 +44,7 @@ To simplify the design, I will use the builtin HDMI and audio jack.
 
 <div align="center">
     <figure>
-        <img src="doc/mk2.png" alt="Enclosure example" width="500">
+        <img src="doc/mk2_bkg.png" alt="Enclosure example" width="500">
         <br>
         <figcaption>Fig 4. Final enclosure design example (mine will be smaller)</figcaption>
     </figure>
