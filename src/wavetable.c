@@ -1,11 +1,11 @@
 #include "wavetable.h"
+#include "config.h"
+#include "wavetable.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
-#include "wavetable.h"
 
 Wavetable *wavetable_create(Waveform type, size_t length) {
     assert(length > 0);

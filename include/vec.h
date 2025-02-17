@@ -1,6 +1,6 @@
 #pragma once
-#include <stddef.h>
 #include "osc.h"
+#include <stddef.h>
 
 #define OSCVEC_INITIAL_CAPACITY 4
 
