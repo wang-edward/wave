@@ -1,0 +1,42 @@
+name: test
+
+env:
+  DOWNLOAD_CACHE_VERSION: 8
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # lint:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: clang-format
+  #     run: |
+        # clang-format --dry-run --Werror src/**/*.cc include/**/*.hh
+
+  ubuntu:
+    permissions:
+      actions: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Install dependencies
+      run: |
+        brew install criterion soundio raylib ccache
+    - name: Compile
+      run: make CC='ccache gcc'
+    - name: Run Unit tests
+      run: |
+        gcc -o test \
+          tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
+          osc.c vec.c wavetable.c \
+          -lcriterion -lm -pthread
+        ./test
