@@ -1,21 +1,20 @@
 #include "osc.h"
 #include "config.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
-void osc_set_freq(struct Osc *osc, double freq) {
+Osc *osc_create(Waveform type, size_t length, double freq) {
+    Osc *osc = malloc(sizeof(Osc));
+    osc->phase = 0.0;
+    osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
+    osc->wt = wavetable_create(type, length);
+    return osc;
+}
+
+void osc_set_freq(Osc *osc, double freq) {
     osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
 }
 
-void osc_init_wavetable(struct Osc *osc) {
-    osc->wavetable = malloc(TABLE_SIZE * sizeof(float));
-    if (!osc->wavetable) {
-        fprintf(stderr, "Failed to allocate memory for wavetable\n");
-        exit(1);
-    }
-    // For now, initialize the wavetable as a sine wave.
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        osc->wavetable[i] = (float)sin(2.0 * M_PI * i / TABLE_SIZE);
-    }
+void osc_destroy(Osc *osc) {
+    wavetable_destroy(osc->wt);
+    free(osc);
 }

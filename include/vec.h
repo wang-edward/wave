@@ -2,14 +2,14 @@
 #include <stddef.h>
 #include "osc.h"
 
+#define OSCVEC_INITIAL_CAPACITY 4
+
 typedef struct {
-    struct Osc *data;
+    Osc **data;
     size_t size;
     size_t capacity;
 } OscVec;
 
-OscVec *oscvec_create(size_t initial_capacity);
-
-void oscvec_push(OscVec *vec, struct Osc osc);
-
+OscVec *oscvec_create();
+void oscvec_push(OscVec *vec, Osc *osc);
 void oscvec_destroy(OscVec *vec);
