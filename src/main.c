@@ -78,7 +78,8 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 }
 
 int main(int argc, char **argv) {
-    (void)argc; (void)argv;
+    (void)argc;
+    (void)argv;
     // Create an oscillator vector.
     OscVec *osc_vec = oscvec_create();
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
