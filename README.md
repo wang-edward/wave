@@ -15,7 +15,7 @@ The distance between the cursor and face determines the gain.
 
 <div align="center">
     <figure>
-        <img src="doc/dimensions.jpeg" alt="2D mixers" width="500">
+        <img src="doc/dimensions.jpeg" alt="multiple dimensions" width="500">
         <br>
         <figcaption>Fig 2. extending the concept to higher dimensions (cube and tesseract)</figcaption>
     </figure>
@@ -34,7 +34,13 @@ I also want midi input. If I have time I want to integrate a keyboard into the d
 I will also have a display to show the position of the cursor within the shape.
 To simplify the design, I will use the builtin HDMI and audio jack.
 
-Fig 3. Architecture
+<div align="center">
+    <figure>
+        <img src="doc/arch.png" alt="Architecture" width="500">
+        <br>
+        <figcaption>Fig 3. Architecture</figcaption>
+    </figure>
+</div>
 
 Fig 4. Final enclosure design example (mine will be smaller)
 
