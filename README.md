@@ -4,8 +4,10 @@ The user is given a geometric shape. Each face of the shape represents a wavefor
 The position of the “cursor” adjusts the amplitude of each wave in the mix.
 The distance between the cursor and face determines the gain.
 
-![image](doc/mix.jpeg)
-Fig 1. Two examples of 2D mixers
+<figure>
+  <img src="doc/mix.jpeg" alt="2D mixers">
+  <figcaption>Fig 1. Two examples of 2D mixers</figcaption>
+</figure>
 
 ![image](doc/dimensions.jpeg)
 Fig 2. extending the concept to higher dimensions (cube and tesseract)
