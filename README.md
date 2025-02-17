@@ -1,3 +1,3 @@
 ```
-brew install libsoundio raylib bear
+brew install libsoundio raylib bear criterion
 ```
