@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "config.h"
 #include "wavetable.h"
 
 Wavetable *wavetable_create(Waveform type, size_t length) {
