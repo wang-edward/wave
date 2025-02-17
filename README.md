@@ -12,8 +12,14 @@ The distance between the cursor and face determines the gain.
     </figure>
 </div>
 
-![image](doc/dimensions.jpeg)
-Fig 2. extending the concept to higher dimensions (cube and tesseract)
+
+<div align="center">
+    <figure>
+        <img src="doc/dimensions.jpeg" alt="2D mixers" width="500">
+        <br>
+        <figcaption>Fig 2. extending the concept to higher dimensions (cube and tesseract)</figcaption>
+    </figure>
+</div>
 
 ## Technical details
 I plan to write the code using the libsoundio library.
