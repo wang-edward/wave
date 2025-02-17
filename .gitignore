@@ -53,3 +53,5 @@ dkms.conf
 
 # outputs
 wave
+compile_commands.json
+.cache
