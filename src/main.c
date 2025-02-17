@@ -14,8 +14,9 @@
 static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // The write callback: libsoundio calls this when it needs more audio samples.
-// We now mix the outputs from all oscillators, each using its own wavetable.
-static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
+// Now we use each oscillator's own wavetable length.
+static void write_callback(struct SoundIoOutStream *outstream,
+                           int frame_count_min, int frame_count_max) {
     OscVec *osc_vec = (OscVec *)outstream->userdata;
     int frames_left = frame_count_max;
 
@@ -37,18 +38,20 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             // Mix output from each oscillator.
             for (size_t i = 0; i < osc_vec->size; i++) {
                 Osc *osc = osc_vec->data[i];
+                // Use the actual wavetable length for indexing.
+                size_t wt_length = osc->wt->length;
                 double pos = osc->phase;
                 int index0 = (int)pos;
-                int index1 = (index0 + 1) % TABLE_SIZE;
+                int index1 = (index0 + 1) % wt_length;
                 double frac = pos - index0;
-                // Use the oscillator's own wavetable.
-                float osc_sample = (float)((1.0 - frac) * osc->wt->data[index0] + frac * osc->wt->data[index1]);
+                float osc_sample = (float)((1.0 - frac) * osc->wt->data[index0] +
+                                           frac * osc->wt->data[index1]);
                 sample += osc_sample;
 
-                // Increment phase and wrap around if necessary.
+                // Increment phase and wrap around using the actual wavetable length.
                 osc->phase += osc->phase_inc;
-                if (osc->phase >= TABLE_SIZE)
-                    osc->phase -= TABLE_SIZE;
+                if (osc->phase >= wt_length)
+                    osc->phase -= wt_length;
             }
             pthread_mutex_unlock(&osc_mutex);
 
@@ -76,9 +79,15 @@ int main(int argc, char **argv) {
     // Create an oscillator vector.
     OscVec *osc_vec = oscvec_create();
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
-    Osc *tempA = osc_create(WAVEFORM_SINE, 16, 440);
-    Osc *tempB = osc_create(WAVEFORM_SAW, 16, 440);
-    Osc *tempC = osc_create(WAVEFORM_SQUARE, 16, 440);
+
+    // Create oscillators with different wavetable resolutions.
+    // For example:
+    //   - A high-resolution sine (1024 samples),
+    //   - A medium-resolution saw (256 samples),
+    //   - A low-resolution square (16 samples) for a bitcrushed effect.
+    Osc *tempA = osc_create(WAVEFORM_SINE, 1024, freq0);
+    Osc *tempB = osc_create(WAVEFORM_SAW, 256, freq1);
+    Osc *tempC = osc_create(WAVEFORM_SQUARE, 16, freq2);
 
     oscvec_push(osc_vec, tempA);
     oscvec_push(osc_vec, tempB);
@@ -151,7 +160,7 @@ int main(int argc, char **argv) {
     }
 
     // Initialize Raylib window.
-    InitWindow(480, 480, "Multiple Oscillators with Individual Wavetables");
+    InitWindow(480, 480, "Multiple Oscillators with Variable Wavetable Lengths");
 
     while (!WindowShouldClose()) {
         BeginDrawing();
