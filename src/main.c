@@ -17,6 +17,7 @@ static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Now we use each oscillator's own wavetable length.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
                            int frame_count_max) {
+    (void)frame_count_min;
     OscVec *osc_vec = (OscVec *)outstream->userdata;
     int frames_left = frame_count_max;
 
@@ -77,6 +78,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 }
 
 int main(int argc, char **argv) {
+    (void)argc; (void)argv;
     // Create an oscillator vector.
     OscVec *osc_vec = oscvec_create();
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
