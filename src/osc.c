@@ -10,9 +10,7 @@ Osc *osc_create(Waveform type, size_t length, double freq) {
     return osc;
 }
 
-void osc_set_freq(Osc *osc, double freq) {
-    osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
-}
+void osc_set_freq(Osc *osc, double freq) { osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE; }
 
 void osc_destroy(Osc *osc) {
     wavetable_destroy(osc->wt);
