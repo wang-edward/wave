@@ -9,11 +9,11 @@ Test(oscvec, push_resize_and_destroy) {
 
     // We'll push 10 oscillators to force a resize (initial capacity is 4)
     const int numOsc = 10;
-    for (int i = 0; i < numOsc; i++) {
+    for (size_t i = 0; i < numOsc; i++) {
         // Use different parameters to differentiate each oscillator.
-        Osc *osc = osc_create(WAVEFORM_SAW + (i % 3), 256 * (i + 1), 220.0 + (i * 10));
+        Osc *osc = osc_create(WAVEFORM_SAW + (i % 2), 256 * (i + 1), 220.0 + (i * 10));
         oscvec_push(vec, osc);
-        cr_assert_eq(vec->size, i + 1, "After push %d, oscvec size should be %d", i + 1, i + 1);
+        cr_assert_eq(vec->size, i + 1, "After push %ld, oscvec size should be %ld", i + 1, i + 1);
     }
 
     // Verify that the oscillators were stored correctly
