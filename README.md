@@ -42,7 +42,13 @@ To simplify the design, I will use the builtin HDMI and audio jack.
     </figure>
 </div>
 
-Fig 4. Final enclosure design example (mine will be smaller)
+<div align="center">
+    <figure>
+        <img src="doc/mk2.png" alt="Enclosure example" width="500">
+        <br>
+        <figcaption>Fig 4. Final enclosure design example (mine will be smaller)</figcaption>
+    </figure>
+</div>
 
 ## References
 The original idea came from Ewan Bristol’s Plugdata sketch
