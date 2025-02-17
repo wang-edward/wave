@@ -42,7 +42,7 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_C_COMPILER="ccache gcc" -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -DCMAKE_BUILD_TYPE=Debug CC="ccache gcc"
           cmake --build .
       - name: Run Unit tests
         run: |
