@@ -3,6 +3,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <soundio/soundio.h>
+#include <raylib.h>
 
 #define TABLE_SIZE 1024
 #define SAMPLE_RATE 48000
@@ -18,14 +19,20 @@ void init_wavetable(void) {
 }
 
 // Structure to hold our oscillator state.
-struct Oscillator {
+struct Osc {
     double phase;      // current phase (in table index units)
     double phase_inc;  // phase increment per sample
 };
 
+void osc_set_freq(struct Osc *osc, double freq) {
+    osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
+}
+
+
+
 // The write callback: libsoundio calls this when it needs more audio samples.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
-    struct Oscillator *osc = (struct Oscillator *)outstream->userdata;
+    struct Osc *osc = (struct Osc *)outstream->userdata;
     int frames_left = frame_count_max;
 
     while (frames_left > 0) {
@@ -75,7 +82,7 @@ int main(int argc, char **argv) {
     init_wavetable();
 
     // Set up our oscillator to produce a 440 Hz tone.
-    struct Oscillator osc;
+    struct Osc osc;
     osc.phase = 0.0;
     double frequency = 440.0;
     osc.phase_inc = (TABLE_SIZE * frequency) / SAMPLE_RATE;
@@ -150,10 +157,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Let the tone play for 3 seconds.
-    sleep(3);
+    InitWindow(480, 480, "wave");
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        EndDrawing();
+    }
 
     // Clean up.
+    CloseWindow();
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);
     soundio_destroy(soundio);
