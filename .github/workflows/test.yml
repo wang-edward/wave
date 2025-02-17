@@ -48,6 +48,6 @@ jobs:
         run: |
           gcc -o test \
             tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
-            osc.c vec.c wavetable.c \
+            src/osc.c src/vec.c src/wavetable.c \
             -lcriterion -lm -pthread
           ./test
