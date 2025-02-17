@@ -7,6 +7,7 @@ The distance between the cursor and face determines the gain.
 <div align="center">
     <figure>
         <img src="doc/mix.jpeg" alt="2D mixers" width="500">
+        <br>
         <figcaption>Fig 1. Two examples of 2D mixers</figcaption>
     </figure>
 </div>
