@@ -30,6 +30,7 @@ jobs:
         submodules: recursive
     - name: Install dependencies
       run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" NONINTERACTIVE=1
         brew install criterion soundio raylib ccache
         mkdir ~/.ccache
     - name: Cache
