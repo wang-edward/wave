@@ -161,8 +161,18 @@ int main(int argc, char **argv) {
 
     while (!WindowShouldClose()) {
         BeginDrawing();
+
         ClearBackground(RAYWHITE);
         DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+
+        if (IsKeyDown(KEY_UP)) {
+            frequency *= 2;
+            osc_set_freq(&osc, frequency);
+        } else if (IsKeyDown(KEY_DOWN)) {
+            frequency /= 2;
+            osc_set_freq(&osc, frequency);
+        }
+
         EndDrawing();
     }
 
