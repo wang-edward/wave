@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <soundio/soundio.h>
 #include <raylib.h>
+#include <pthread.h>  // For mutex
 
 #define TABLE_SIZE 1024
 #define SAMPLE_RATE 48000
@@ -28,7 +29,8 @@ void osc_set_freq(struct Osc *osc, double freq) {
     osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
 }
 
-
+// Global mutex to protect oscillator state.
+static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // The write callback: libsoundio calls this when it needs more audio samples.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
@@ -48,24 +50,27 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 
         // For each frame, compute the sample from the wavetable oscillator.
         for (int frame = 0; frame < frame_count; frame++) {
-            // Compute the table indices for interpolation.
+            float sample;
+
+            // Lock the oscillator state before reading and updating it.
+            pthread_mutex_lock(&osc_mutex);
             double pos = osc->phase;
             int index0 = (int)pos;
             int index1 = (index0 + 1) % TABLE_SIZE;
             double frac = pos - index0;
-            // Linear interpolation between wavetable samples.
-            float sample = (float)((1.0 - frac) * wavetable[index0] + frac * wavetable[index1]);
+            sample = (float)((1.0 - frac) * wavetable[index0] + frac * wavetable[index1]);
+
+            // Increment phase and wrap around if necessary.
+            osc->phase += osc->phase_inc;
+            if (osc->phase >= TABLE_SIZE)
+                osc->phase -= TABLE_SIZE;
+            pthread_mutex_unlock(&osc_mutex);
 
             // Write the same sample to all output channels.
             for (int ch = 0; ch < outstream->layout.channel_count; ch++) {
                 char *ptr = areas[ch].ptr + areas[ch].step * frame;
                 *((float *)ptr) = sample; // using SOUNDIO_FORMAT_FLOAT32NE
             }
-
-            // Increment phase and wrap around if necessary.
-            osc->phase += osc->phase_inc;
-            if (osc->phase >= TABLE_SIZE)
-                osc->phase -= TABLE_SIZE;
         }
 
         err = soundio_outstream_end_write(outstream);
@@ -85,7 +90,7 @@ int main(int argc, char **argv) {
     struct Osc osc;
     osc.phase = 0.0;
     double frequency = 440.0;
-    osc.phase_inc = (TABLE_SIZE * frequency) / SAMPLE_RATE;
+    osc_set_freq(&osc, frequency);
 
     // Initialize libsoundio.
     struct SoundIo *soundio = soundio_create();
@@ -116,11 +121,10 @@ int main(int argc, char **argv) {
 
     // Create an output stream.
     struct SoundIoOutStream *outstream = soundio_outstream_create(device);
-    // Use the native-endian float format.
     outstream->format = SoundIoFormatFloat32NE;
     outstream->sample_rate = SAMPLE_RATE;
 
-    // Attempt to choose a stereo channel layout if available.
+    // Choose a channel layout.
     if (device->layout_count > 0) {
         int found = 0;
         for (int i = 0; i < device->layout_count; i++) {
@@ -133,8 +137,6 @@ int main(int argc, char **argv) {
         if (!found)
             outstream->layout = device->layouts[0];
     } else {
-        // If there are no layouts provided, you can set a default layout.
-        // (SOUNDIO_CHANNEL_LAYOUT_STEREO might be undefined; if so, set the channel_count manually.)
         outstream->layout = *soundio_channel_layout_get_default(2);
     }
 
@@ -142,7 +144,7 @@ int main(int argc, char **argv) {
     outstream->userdata = &osc;
     outstream->write_callback = write_callback;
 
-    // Open the output stream.
+    // Open and start the output stream.
     err = soundio_outstream_open(outstream);
     if (err) {
         fprintf(stderr, "Error opening stream: %s\n", soundio_strerror(err));
@@ -157,20 +159,26 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    // Initialize Raylib window.
     InitWindow(480, 480, "wave");
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-
         ClearBackground(RAYWHITE);
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        DrawText("Press UP/DOWN to change frequency", 10, 10, 20, DARKGRAY);
 
-        if (IsKeyDown(KEY_UP)) {
+        // Use IsKeyPressed() for debouncing: update only on the first frame of a key press.
+        if (IsKeyPressed(KEY_UP)) {
+            pthread_mutex_lock(&osc_mutex);
             frequency *= 2;
             osc_set_freq(&osc, frequency);
-        } else if (IsKeyDown(KEY_DOWN)) {
+            pthread_mutex_unlock(&osc_mutex);
+        }
+        if (IsKeyPressed(KEY_DOWN)) {
+            pthread_mutex_lock(&osc_mutex);
             frequency /= 2;
             osc_set_freq(&osc, frequency);
+            pthread_mutex_unlock(&osc_mutex);
         }
 
         EndDrawing();
