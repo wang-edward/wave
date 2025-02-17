@@ -30,10 +30,8 @@ jobs:
         submodules: recursive
     - name: Install dependencies
       run: |
-        # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" NONINTERACTIVE=1
-        # /home/linuxbrew/.linuxbrew/bin/brew install criterion libsoundio raylib ccache
         sudo apt update
-        sudo apt install ccache libcriterion-dev libsoundio-dev
+        sudo apt install ccache libcriterion-dev libsoundio-dev libx11-dev
         mkdir ~/.ccache
     - name: Cache
       uses: actions/cache@v4
