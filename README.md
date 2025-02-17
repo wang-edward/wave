@@ -51,8 +51,11 @@ To simplify the design, I will use the builtin HDMI and audio jack.
 </div>
 
 ## References
-The original idea came from Ewan Bristol’s Plugdata sketch
-I expanded on it by making it 3d and having hardware
-Fig 3. The front panel is from the Moog Minimoog
-Fig 3. The headphones are the Sony MDR-7506
-Fig 4. This is the Waldorf Music “MK2”
+[The original idea came from Ewan Bristol’s Plugdata sketch](https://x.com/bristowewan/status/1865000744400691388)
+- I expanded on it by making it 3d and having hardware
+
+[Fig 3. The front panel is from the Moog Minimoog](https://www.moogmusic.com/products/minimoog-model-d)
+
+[Fig 3. The headphones are the Sony MDR-7506](https://pro.sony/en_CA/products/headphones)
+
+[Fig 4. This is the Waldorf Music “MK2”](https://waldorfmusic.com/mk2/)
