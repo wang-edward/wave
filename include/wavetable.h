@@ -5,12 +5,12 @@ typedef enum {
     WAVEFORM_SQUARE,
     WAVEFORM_SAW,
     WAVEFORM_TRIANGLE,
-    WAVEFORM_CUSTOM  // Option to use custom waveform data
+    WAVEFORM_CUSTOM // Option to use custom waveform data
 } Waveform;
 
 typedef struct {
     float *data;
-    size_t length;     // Number of samples in the wavetable.
+    size_t length; // Number of samples in the wavetable.
     Waveform type;
 } Wavetable;
 
