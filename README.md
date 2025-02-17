@@ -52,7 +52,7 @@ To simplify the design, I will use the builtin HDMI and audio jack.
 
 ## References
 [The original idea came from Ewan Bristol’s Plugdata sketch](https://x.com/bristowewan/status/1865000744400691388)
-- I expanded on it by making it 3d and having hardware
+- I expanded on it by making it 3d (and 4d?) and having hardware
 
 [Fig 3. The front panel is from the Moog Minimoog](https://www.moogmusic.com/products/minimoog-model-d)
 
