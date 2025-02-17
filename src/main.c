@@ -36,13 +36,13 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             pthread_mutex_lock(&osc_mutex);
             // Mix output from each oscillator.
             for (size_t i = 0; i < osc_vec->size; i++) {
-                struct Osc *osc = &osc_vec->data[i];
+                Osc *osc = osc_vec->data[i];
                 double pos = osc->phase;
                 int index0 = (int)pos;
                 int index1 = (index0 + 1) % TABLE_SIZE;
                 double frac = pos - index0;
                 // Use the oscillator's own wavetable.
-                float osc_sample = (float)((1.0 - frac) * osc->wavetable[index0] + frac * osc->wavetable[index1]);
+                float osc_sample = (float)((1.0 - frac) * osc->wt->data[index0] + frac * osc->wt->data[index1]);
                 sample += osc_sample;
 
                 // Increment phase and wrap around if necessary.
@@ -74,27 +74,15 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 
 int main(int argc, char **argv) {
     // Create an oscillator vector.
-    OscVec *osc_vec = oscvec_create(4);
+    OscVec *osc_vec = oscvec_create();
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
-    struct Osc temp;
+    Osc *tempA = osc_create(WAVEFORM_SINE, 16, 440);
+    Osc *tempB = osc_create(WAVEFORM_SAW, 16, 440);
+    Osc *tempC = osc_create(WAVEFORM_SQUARE, 16, 440);
 
-    // Create oscillator 0.
-    temp.phase = 0.0;
-    osc_init_wavetable(&temp);
-    osc_set_freq(&temp, freq0);
-    oscvec_push(osc_vec, temp);
-
-    // Create oscillator 1.
-    temp.phase = 0.0;
-    osc_init_wavetable(&temp);
-    osc_set_freq(&temp, freq1);
-    oscvec_push(osc_vec, temp);
-
-    // Create oscillator 2.
-    temp.phase = 0.0;
-    osc_init_wavetable(&temp);
-    osc_set_freq(&temp, freq2);
-    oscvec_push(osc_vec, temp);
+    oscvec_push(osc_vec, tempA);
+    oscvec_push(osc_vec, tempB);
+    oscvec_push(osc_vec, tempC);
 
     // Initialize libsoundio.
     struct SoundIo *soundio = soundio_create();
@@ -177,7 +165,7 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_UP)) {
             pthread_mutex_lock(&osc_mutex);
             freq0 += 10.0;
-            osc_set_freq(&osc_vec->data[0], freq0);
+            osc_set_freq(osc_vec->data[0], freq0);
             pthread_mutex_unlock(&osc_mutex);
         }
         if (IsKeyPressed(KEY_DOWN)) {
@@ -185,7 +173,7 @@ int main(int argc, char **argv) {
             freq0 -= 10.0;
             if (freq0 < 1.0)
                 freq0 = 1.0;
-            osc_set_freq(&osc_vec->data[0], freq0);
+            osc_set_freq(osc_vec->data[0], freq0);
             pthread_mutex_unlock(&osc_mutex);
         }
 
@@ -193,7 +181,7 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_RIGHT)) {
             pthread_mutex_lock(&osc_mutex);
             freq1 += 10.0;
-            osc_set_freq(&osc_vec->data[1], freq1);
+            osc_set_freq(osc_vec->data[1], freq1);
             pthread_mutex_unlock(&osc_mutex);
         }
         if (IsKeyPressed(KEY_LEFT)) {
@@ -201,7 +189,7 @@ int main(int argc, char **argv) {
             freq1 -= 10.0;
             if (freq1 < 1.0)
                 freq1 = 1.0;
-            osc_set_freq(&osc_vec->data[1], freq1);
+            osc_set_freq(osc_vec->data[1], freq1);
             pthread_mutex_unlock(&osc_mutex);
         }
 
@@ -209,7 +197,7 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_W)) {
             pthread_mutex_lock(&osc_mutex);
             freq2 += 10.0;
-            osc_set_freq(&osc_vec->data[2], freq2);
+            osc_set_freq(osc_vec->data[2], freq2);
             pthread_mutex_unlock(&osc_mutex);
         }
         if (IsKeyPressed(KEY_S)) {
@@ -217,7 +205,7 @@ int main(int argc, char **argv) {
             freq2 -= 10.0;
             if (freq2 < 1.0)
                 freq2 = 1.0;
-            osc_set_freq(&osc_vec->data[2], freq2);
+            osc_set_freq(osc_vec->data[2], freq2);
             pthread_mutex_unlock(&osc_mutex);
         }
 
