@@ -13,39 +13,46 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: clang-format
-      run: |
-        clang-format --dry-run --Werror src/*.c include/*.h
+      - uses: actions/checkout@v4
+      - name: clang-format
+        run: |
+          clang-format --dry-run --Werror src/*.c include/*.h
 
   ubuntu:
     permissions:
       actions: write
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install ccache libcriterion-dev libsoundio-dev \
-          libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev
-        mkdir ~/.ccache
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.ccache
-        key: ${{ runner.os }}-ccache-${{ hashFiles('**/Makefile') }}-${{ env.DOWNLOAD_CACHE_VERSION }}
-    - name: Compile
-      run: make CC='ccache gcc'
-    - name: Run Unit tests
-      run: |
-        gcc -o test \
-          tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
-          osc.c vec.c wavetable.c \
-          -lcriterion -lm -pthread CC='ccache gcc'
-        ./test
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install ccache libcriterion-dev libsoundio-dev \
+            libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev \
+            libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev cmake
+          mkdir -p ~/.ccache
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ hashFiles('**/CMakeLists.txt') }}-${{ env.DOWNLOAD_CACHE_VERSION }}
+      - name: Compile with CMake
+        run: |
+          mkdir -p build
+          cd build
+          # Configure CMake; force use of ccache gcc and Debug build type
+          cmake .. -DCMAKE_C_COMPILER="ccache gcc" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build .
+      - name: Run Unit tests
+        run: |
+          # If you have tests integrated as a CTest target, you can run:
+          # cd build && ctest --output-on-failure
+          #
+          # Otherwise, here's an example of compiling tests manually:
+          gcc -o test \
+            tests/test_wavetable.c tests/test_osc.c tests/test_vec.c \
+            osc.c vec.c wavetable.c \
+            -lcriterion -lm -pthread
+          ./test
