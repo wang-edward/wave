@@ -6,8 +6,9 @@
 #include <raylib.h>
 #include <pthread.h>  // For mutex
 
-#define TABLE_SIZE 1024
-#define SAMPLE_RATE 48000
+#include "config.h"
+#include "osc.h"
+#include "vec.h"
 
 // The wavetable will hold one cycle of a sine wave.
 static float wavetable[TABLE_SIZE];
@@ -17,16 +18,6 @@ void init_wavetable(void) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         wavetable[i] = (float)sin(2.0 * M_PI * i / TABLE_SIZE);
     }
-}
-
-// Structure to hold our oscillator state.
-struct Osc {
-    double phase;      // current phase (in table index units)
-    double phase_inc;  // phase increment per sample
-};
-
-void osc_set_freq(struct Osc *osc, double freq) {
-    osc->phase_inc = (TABLE_SIZE * freq) / SAMPLE_RATE;
 }
 
 // Global mutex to protect oscillator state.
