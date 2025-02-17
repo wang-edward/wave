@@ -1,10 +1,10 @@
-#include <math.h>
-#include <pthread.h> // For mutex
-#include <raylib.h>
-#include <soundio/soundio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <unistd.h>
+#include <soundio/soundio.h>
+#include <raylib.h>
+#include <pthread.h>  // For mutex
 
 #include "config.h"
 #include "osc.h"
@@ -15,8 +15,8 @@ static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // The write callback: libsoundio calls this when it needs more audio samples.
 // Now we use each oscillator's own wavetable length.
-static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
-                           int frame_count_max) {
+static void write_callback(struct SoundIoOutStream *outstream,
+                           int frame_count_min, int frame_count_max) {
     OscVec *osc_vec = (OscVec *)outstream->userdata;
     int frames_left = frame_count_max;
 
@@ -44,12 +44,11 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
                 int index0 = (int)pos;
                 int index1 = (index0 + 1) % wt_length;
                 double frac = pos - index0;
-                float osc_sample =
-                    (float)((1.0 - frac) * osc->wt->data[index0] + frac * osc->wt->data[index1]);
+                float osc_sample = (float)((1.0 - frac) * osc->wt->data[index0] +
+                                           frac * osc->wt->data[index1]);
                 sample += osc_sample;
 
-                // Increment phase and wrap around using the actual wavetable
-                // length.
+                // Increment phase and wrap around using the actual wavetable length.
                 osc->phase += osc->phase_inc;
                 if (osc->phase >= wt_length)
                     osc->phase -= wt_length;
