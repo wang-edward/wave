@@ -1,4 +1,3 @@
-#include <math.h>
 #include <pthread.h> // For mutex
 #include <raylib.h>
 #include <soundio/soundio.h>
