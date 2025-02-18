@@ -1,8 +1,8 @@
 ## wave
-My project is a wavetable synthesizer that visually represents the mixing of different waveforms.
-The user is given a geometric shape. Each face of the shape represents a waveform.
-The position of the “cursor” adjusts the amplitude of each wave in the mix.
-The distance between the cursor and face determines the gain.
+- My project is a wavetable synthesizer that visually represents the mixing of different waveforms.
+- The user is given a geometric shape. Each face of the shape represents a waveform.
+- The position of the “cursor” adjusts the amplitude of each wave in the mix.
+    - The distance between the cursor and face determines the gain.
 
 <div align="center">
     <figure>
@@ -24,17 +24,17 @@ The distance between the cursor and face determines the gain.
 </div>
 
 ## Technical details
-I plan to write the code using the libsoundio library.
-I will use the C3 language, which has C ABI to allow use of the library.
+- I plan to write the code using the libsoundio library.
+- I will use the C3 language, which has C ABI to allow use of the library.
 ## Method
-I will use an approach I found on wikipedia: iterating through arrays containing waveforms at a given speed, and using linear interpolation to fill in the gaps.
-I already have a repo up with a working example (440hz sine wave)
+- I will use an approach I found on wikipedia: iterating through arrays containing waveforms at a given speed, and using linear interpolation to fill in the gaps.
+- I already have a repo up with a working example (440hz sine wave)
 ## Hardware
-If time permits, I want to have a hardware interface. 
-I will use a Raspberry Pi and read from plate-mounted potentiometers and buttons.
-I also want midi input. If I have time I want to integrate a keyboard into the device itself, kind of like the Minimoog.
-I will also have a display to show the position of the cursor within the shape.
-To simplify the design, I will use the builtin HDMI and audio jack.
+- If time permits, I want to have a hardware interface. 
+- I will use a Raspberry Pi and read from plate-mounted potentiometers and buttons.
+- I also want midi input. If I have time I want to integrate a keyboard into the device itself, kind of like the Minimoog.
+- I will also have a display to show the position of the cursor within the shape.
+    - To simplify the design, I will use the builtin HDMI and audio jack.
 
 <div align="center">
     <figure>
