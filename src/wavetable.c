@@ -1,14 +1,14 @@
 #include "wavetable.h"
-#include "config.h"
 #include "wavetable.h"
 #include <assert.h>
+#include <criterion/criterion.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 Wavetable *wavetable_create(Waveform type, size_t length) {
-    assert(length > 0);
+    cr_assert(length > 0);
 
     Wavetable *wt = malloc(sizeof(Wavetable));
     if (!wt) {
@@ -43,7 +43,7 @@ Wavetable *wavetable_create(Waveform type, size_t length) {
                 value = 1.0f - 2.0f * (i - length / 2) / (length / 2);
             break;
         default:
-            assert(false);
+            cr_assert(false);
             break;
         }
         wt->data[i] = value;
@@ -52,7 +52,8 @@ Wavetable *wavetable_create(Waveform type, size_t length) {
 }
 
 void wavetable_destroy(Wavetable *wt) {
-    assert(wt);
+    printf("wavetable_destroy: %d\n", wt);
+    cr_assert(wt);
     free(wt->data);
     free(wt);
 }

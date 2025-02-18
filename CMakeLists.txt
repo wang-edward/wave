@@ -5,6 +5,7 @@ project(wave C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g")
+set(CMAKE_BUILD_TYPE Debug)
 
 # Include your own headers
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -30,7 +31,7 @@ add_executable(wave ${SOURCES})
 target_compile_definitions(wave PRIVATE PLATFORM_DESKTOP)
 
 # Link with raylib and required system libraries
-target_link_libraries(wave raylib m soundio pthread)
+target_link_libraries(wave raylib m soundio pthread criterion)
 
 
 # TEST

@@ -6,7 +6,6 @@
 
 Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     assert(element_size > 0);
-    assert(destroy_func);
 
     Vec *vec = malloc(sizeof(Vec));
     if (!vec) {
@@ -26,7 +25,7 @@ Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     return vec;
 }
 
-void vec_delete(Vec *vec) {
+void vec_destroy(Vec *vec) {
     assert(vec);
 
     if (vec->destroy_func) {
@@ -76,5 +75,10 @@ void vec_set(Vec *vec, size_t index, const void *element) {
 void vec_pop_back(Vec *vec) {
     assert(vec);
     assert(vec->size > 0);
+
     vec->size--;
+    if (vec->destroy_func) {
+        void *elem_ptr = (char *)vec->data + vec->size * vec->element_size;
+        vec->destroy_func(elem_ptr);
+    }
 }
