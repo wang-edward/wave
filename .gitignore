@@ -56,3 +56,4 @@ wave
 compile_commands.json
 .cache
 build
+.DS_Store
