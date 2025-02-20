@@ -1,7 +1,7 @@
 name: test
 
 env:
-  DOWNLOAD_CACHE_VERSION: 8
+  DOWNLOAD_CACHE_VERSION: 2
 
 on:
   push:
