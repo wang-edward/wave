@@ -4,47 +4,47 @@
 
 Test(wavetable, sine_generation) {
     size_t length = 100;
-    Wavetable *wt = wavetable_create(WAVEFORM_SINE, length);
-    cr_assert_not_null(wt, "wavetable_create returned NULL for sine");
+    Wavetable *wt = Wavetable_create(WAVEFORM_SINE, length);
+    cr_assert_not_null(wt, "Wavetable_create returned NULL for sine");
     cr_assert_eq(wt->length, length, "Expected wavetable length %zu, got %zu", length, wt->length);
 
     for (size_t i = 0; i < length; i++) {
         float expected = (float)sin(2.0 * M_PI * i / length);
         cr_assert_float_eq(wt->data[i], expected, 0.0001, "Sine sample at index %zu incorrect", i);
     }
-    wavetable_destroy(wt);
+    Wavetable_destroy(wt);
 }
 
 Test(wavetable, square_generation) {
     size_t length = 10;
-    Wavetable *wt = wavetable_create(WAVEFORM_SQUARE, length);
-    cr_assert_not_null(wt, "wavetable_create returned NULL for square");
+    Wavetable *wt = Wavetable_create(WAVEFORM_SQUARE, length);
+    cr_assert_not_null(wt, "Wavetable_create returned NULL for square");
     cr_assert_eq(wt->length, length, "Expected wavetable length %zu", length);
     
     for (size_t i = 0; i < length; i++) {
         float expected = (i < length / 2) ? 1.0f : -1.0f;
         cr_assert_float_eq(wt->data[i], expected, 0.0001, "Square sample at index %zu incorrect", i);
     }
-    wavetable_destroy(wt);
+    Wavetable_destroy(wt);
 }
 
 Test(wavetable, saw_generation) {
     size_t length = 10;
-    Wavetable *wt = wavetable_create(WAVEFORM_SAW, length);
-    cr_assert_not_null(wt, "wavetable_create returned NULL for saw");
+    Wavetable *wt = Wavetable_create(WAVEFORM_SAW, length);
+    cr_assert_not_null(wt, "Wavetable_create returned NULL for saw");
     cr_assert_eq(wt->length, length, "Expected wavetable length %zu", length);
     
     for (size_t i = 0; i < length; i++) {
         float expected = 2.0f * i / length - 1.0f;
         cr_assert_float_eq(wt->data[i], expected, 0.0001, "Saw sample at index %zu incorrect", i);
     }
-    wavetable_destroy(wt);
+    Wavetable_destroy(wt);
 }
 
 Test(wavetable, triangle_generation) {
     size_t length = 10;
-    Wavetable *wt = wavetable_create(WAVEFORM_TRIANGLE, length);
-    cr_assert_not_null(wt, "wavetable_create returned NULL for triangle");
+    Wavetable *wt = Wavetable_create(WAVEFORM_TRIANGLE, length);
+    cr_assert_not_null(wt, "Wavetable_create returned NULL for triangle");
     cr_assert_eq(wt->length, length, "Expected wavetable length %zu", length);
     
     for (size_t i = 0; i < length; i++) {
@@ -56,22 +56,22 @@ Test(wavetable, triangle_generation) {
         }
         cr_assert_float_eq(wt->data[i], expected, 0.0001, "Triangle sample at index %zu incorrect", i);
     }
-    wavetable_destroy(wt);
+    Wavetable_destroy(wt);
 }
 
 // Test(wavetable, custom_waveform) {
 //     size_t length = 5;
-//     Wavetable *wt = wavetable_create(WAVEFORM_SINE, length);
-//     /* Assume wavetable_set_custom replaces the data and sets type to WAVEFORM_CUSTOM */
+//     Wavetable *wt = Wavetable_create(WAVEFORM_SINE, length);
+//     /* Assume Wavetable_set_custom replaces the data and sets type to WAVEFORM_CUSTOM */
 //     float custom_data[5] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
-//     wavetable_set_custom(wt, custom_data, length);
+//     Wavetable_set_custom(wt, custom_data, length);
 
 //     for (size_t i = 0; i < length; i++) {
 //         cr_assert_float_eq(wt->data[i], custom_data[i], 0.0001, "Custom sample at index %zu incorrect", i);
 //     }
 //     cr_assert_eq(wt->type, WAVEFORM_CUSTOM, "Expected wavetable type WAVEFORM_CUSTOM");
 //     
-//     wavetable_destroy(wt);
+//     Wavetable_destroy(wt);
 // }
 
 Test(wtvec, push_get_and_destroy) {
@@ -80,14 +80,14 @@ Test(wtvec, push_get_and_destroy) {
     cr_assert_eq(WtVec_size(wv), 0, "Initial WtVec size should be 0");
 
     size_t length1 = 100;
-    Wavetable *wt1 = wavetable_create(WAVEFORM_SINE, length1);
-    cr_assert_not_null(wt1, "wavetable_create returned NULL for sine");
+    Wavetable *wt1 = Wavetable_create(WAVEFORM_SINE, length1);
+    cr_assert_not_null(wt1, "Wavetable_create returned NULL for sine");
     WtVec_push(wv, wt1);
     cr_assert_eq(WtVec_size(wv), 1, "After pushing sine wavetable, size should be 1");
 
     size_t length2 = 50;
-    Wavetable *wt2 = wavetable_create(WAVEFORM_SAW, length2);
-    cr_assert_not_null(wt2, "wavetable_create returned NULL for saw");
+    Wavetable *wt2 = Wavetable_create(WAVEFORM_SAW, length2);
+    cr_assert_not_null(wt2, "Wavetable_create returned NULL for saw");
     WtVec_push(wv, wt2);
     cr_assert_eq(WtVec_size(wv), 2, "After pushing saw wavetable, size should be 2");
 

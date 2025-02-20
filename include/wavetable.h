@@ -16,9 +16,9 @@ typedef struct {
     Waveform type;
 } Wavetable;
 
-Wavetable *wavetable_create(Waveform type, size_t length);
-void wavetable_set_custom(Wavetable *wt, float *data, size_t length);
-void wavetable_destroy(Wavetable *wt);
+Wavetable *Wavetable_create(Waveform type, size_t length);
+void Wavetable_set_custom(Wavetable *wt, float *data, size_t length);
+void Wavetable_destroy(Wavetable *wt);
 
 typedef struct {
     Vec *vec;
