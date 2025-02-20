@@ -73,3 +73,45 @@ Test(wavetable, triangle_generation) {
 //     
 //     wavetable_destroy(wt);
 // }
+
+Test(wtvec, push_get_and_destroy) {
+    WtVec *wv = WtVec_create();
+    cr_assert_not_null(wv, "WtVec_create returned NULL");
+    cr_assert_eq(WtVec_size(wv), 0, "Initial WtVec size should be 0");
+
+    size_t length1 = 100;
+    Wavetable *wt1 = wavetable_create(WAVEFORM_SINE, length1);
+    cr_assert_not_null(wt1, "wavetable_create returned NULL for sine");
+    WtVec_push(wv, wt1);
+    cr_assert_eq(WtVec_size(wv), 1, "After pushing sine wavetable, size should be 1");
+
+    size_t length2 = 50;
+    Wavetable *wt2 = wavetable_create(WAVEFORM_SAW, length2);
+    cr_assert_not_null(wt2, "wavetable_create returned NULL for saw");
+    WtVec_push(wv, wt2);
+    cr_assert_eq(WtVec_size(wv), 2, "After pushing saw wavetable, size should be 2");
+
+    Wavetable *retrieved1 = WtVec_get(wv, 0);
+    cr_assert_not_null(retrieved1, "Retrieved wavetable 1 is NULL");
+    cr_assert_eq(retrieved1->type, WAVEFORM_SINE, "Retrieved wavetable 1 type mismatch");
+    cr_assert_eq(retrieved1->length, length1, "Retrieved wavetable 1 length mismatch");
+
+    for (size_t i = 0; i < length1; i++) {
+        float expected = (float)sin(2.0 * M_PI * i / length1);
+        cr_assert_float_eq(retrieved1->data[i], expected, 0.0001,
+                           "Sine wavetable sample at index %zu incorrect", i);
+    }
+
+    Wavetable *retrieved2 = WtVec_get(wv, 1);
+    cr_assert_not_null(retrieved2, "Retrieved wavetable 2 is NULL");
+    cr_assert_eq(retrieved2->type, WAVEFORM_SAW, "Retrieved wavetable 2 type mismatch");
+    cr_assert_eq(retrieved2->length, length2, "Retrieved wavetable 2 length mismatch");
+
+    for (size_t i = 0; i < length2; i++) {
+        float expected = 2.0f * i / length2 - 1.0f;
+        cr_assert_float_eq(retrieved2->data[i], expected, 0.0001,
+                           "Saw wavetable sample at index %zu incorrect", i);
+    }
+
+    WtVec_destroy(wv);
+}
