@@ -38,14 +38,12 @@ target_link_libraries(wave raylib m soundio pthread criterion)
 enable_testing()
 
 # Define unit test sources
-set(TEST_SOURCES
-    tests/test_wavetable.c
-    tests/test_osc.c
-    tests/test_vec.c
-    src/osc.c
-    src/vec.c
-    src/wavetable.c
+file(GLOB TEST_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*"
 )
+list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c")
+
 
 # Create an executable for unit tests
 add_executable(unit_tests ${TEST_SOURCES})
