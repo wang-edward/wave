@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BIN_PATH="./build/wave"
+BIN_PATH="./build/unit_tests --verbose=1"
 
 cmake -DCMAKE_BUILD_TYPE=Debug -B build
 
