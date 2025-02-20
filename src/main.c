@@ -10,14 +10,14 @@
 #include "vec.h"
 
 // Global mutex to protect oscillator state.
-static pthread_mutex_t osc_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t Osc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // The write callback: libsoundio calls this when it needs more audio samples.
 // Now we use each oscillator's own wavetable length.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
                            int frame_count_max) {
     (void)frame_count_min;
-    Vec *osc_vec = (Vec *)outstream->userdata;
+    Vec *Osc_vec = (Vec *)outstream->userdata;
     int frames_left = frame_count_max;
 
     while (frames_left > 0) {
@@ -34,31 +34,31 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
         for (int frame = 0; frame < frame_count; frame++) {
             float sample = 0.0f;
 
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             // Mix output from each oscillator.
-            for (size_t i = 0; i < osc_vec->size; i++) {
+            for (size_t i = 0; i < Osc_vec->size; i++) {
                 // Retrieve the Osc* stored at index i.
-                Osc *osc = ((Osc **)(osc_vec->data))[i];
+                Osc *osc = ((Osc **)(Osc_vec->data))[i];
                 // Use the actual wavetable length for indexing.
                 size_t wt_length = osc->wt->length;
                 double pos = osc->phase;
                 int index0 = (int)pos;
                 int index1 = (index0 + 1) % wt_length;
                 double frac = pos - index0;
-                float osc_sample =
+                float Osc_sample =
                     (float)((1.0 - frac) * osc->wt->data[index0] + frac * osc->wt->data[index1]);
-                sample += osc_sample;
+                sample += Osc_sample;
 
                 // Increment phase and wrap around using the actual wavetable length.
                 osc->phase += osc->phase_inc;
                 if (osc->phase >= wt_length)
                     osc->phase -= wt_length;
             }
-            pthread_mutex_unlock(&osc_mutex);
+            pthread_mutex_unlock(&Osc_mutex);
 
             // Average the mixed sample.
-            if (osc_vec->size > 0)
-                sample /= osc_vec->size;
+            if (Osc_vec->size > 0)
+                sample /= Osc_vec->size;
 
             // Write the sample to all output channels.
             for (int ch = 0; ch < outstream->layout.channel_count; ch++) {
@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
     // Create a vector for Osc pointers.
-    // We pass osc_destroy as the element destroy function so that each Osc is properly freed.
-    Vec *osc_vec = vec_create(sizeof(Osc *), (ElemDestroyFunc)osc_destroy);
+    // We pass Osc_destroy as the element destroy function so that each Osc is properly freed.
+    Vec *Osc_vec = Vec_create(sizeof(Osc *), (ElemDestroyFunc)Osc_destroy);
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
 
     // Create oscillators with different wavetable resolutions.
@@ -89,14 +89,14 @@ int main(int argc, char **argv) {
     //   - A high-resolution sine (1024 samples),
     //   - A medium-resolution saw (256 samples),
     //   - A low-resolution square (16 samples) for a bitcrushed effect.
-    Osc *tempA = osc_create(WAVEFORM_SINE, 1024, freq0);
-    Osc *tempB = osc_create(WAVEFORM_SAW, 256, freq1);
-    Osc *tempC = osc_create(WAVEFORM_SQUARE, 16, freq2);
+    Osc *tempA = Osc_create(WAVEFORM_SINE, 1024, freq0);
+    Osc *tempB = Osc_create(WAVEFORM_SAW, 256, freq1);
+    Osc *tempC = Osc_create(WAVEFORM_SQUARE, 16, freq2);
 
     // Push the Osc pointers into the vector.
-    vec_push_back(osc_vec, &tempA);
-    vec_push_back(osc_vec, &tempB);
-    vec_push_back(osc_vec, &tempC);
+    Vec_push_back(Osc_vec, &tempA);
+    Vec_push_back(Osc_vec, &tempB);
+    Vec_push_back(Osc_vec, &tempC);
 
     // Initialize libsoundio.
     struct SoundIo *soundio = soundio_create();
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     }
 
     // Set our oscillator vector as userdata and assign the callback.
-    outstream->userdata = osc_vec;
+    outstream->userdata = Osc_vec;
     outstream->write_callback = write_callback;
 
     // Open and start the output stream.
@@ -177,50 +177,50 @@ int main(int argc, char **argv) {
 
         // Adjust oscillator 0 with UP/DOWN keys.
         if (IsKeyPressed(KEY_UP)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq0 += 10.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[0], freq0);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[0], freq0);
+            pthread_mutex_unlock(&Osc_mutex);
         }
         if (IsKeyPressed(KEY_DOWN)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq0 -= 10.0;
             if (freq0 < 1.0)
                 freq0 = 1.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[0], freq0);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[0], freq0);
+            pthread_mutex_unlock(&Osc_mutex);
         }
 
         // Adjust oscillator 1 with RIGHT/LEFT keys.
         if (IsKeyPressed(KEY_RIGHT)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq1 += 10.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[1], freq1);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[1], freq1);
+            pthread_mutex_unlock(&Osc_mutex);
         }
         if (IsKeyPressed(KEY_LEFT)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq1 -= 10.0;
             if (freq1 < 1.0)
                 freq1 = 1.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[1], freq1);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[1], freq1);
+            pthread_mutex_unlock(&Osc_mutex);
         }
 
         // Adjust oscillator 2 with W/S keys.
         if (IsKeyPressed(KEY_W)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq2 += 10.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[2], freq2);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[2], freq2);
+            pthread_mutex_unlock(&Osc_mutex);
         }
         if (IsKeyPressed(KEY_S)) {
-            pthread_mutex_lock(&osc_mutex);
+            pthread_mutex_lock(&Osc_mutex);
             freq2 -= 10.0;
             if (freq2 < 1.0)
                 freq2 = 1.0;
-            osc_set_freq(((Osc **)(osc_vec->data))[2], freq2);
-            pthread_mutex_unlock(&osc_mutex);
+            Osc_set_freq(((Osc **)(Osc_vec->data))[2], freq2);
+            pthread_mutex_unlock(&Osc_mutex);
         }
 
         EndDrawing();
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);
     soundio_destroy(soundio);
-    vec_destroy(osc_vec);
+    Vec_destroy(Osc_vec);
 
     return 0;
 }

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Wavetable *wavetable_create(Waveform type, size_t length) {
+Wavetable *Wavetable_create(Waveform type, size_t length) {
     cr_assert(length > 0);
 
     Wavetable *wt = malloc(sizeof(Wavetable));
@@ -50,8 +50,27 @@ Wavetable *wavetable_create(Waveform type, size_t length) {
     return wt;
 }
 
-void wavetable_destroy(Wavetable *wt) {
+void Wavetable_destroy(Wavetable *wt) {
     cr_assert(wt);
     free(wt->data);
     free(wt);
+}
+
+WtVec *WtVec_create(void) {
+    WtVec *ov = malloc(sizeof(WtVec));
+    ov->vec = Vec_create(sizeof(Wavetable *), (ElemDestroyFunc)Wavetable_destroy);
+    return ov;
+}
+
+void WtVec_push(WtVec *ov, Wavetable *osc) { Vec_push_back(ov->vec, &osc); }
+
+Wavetable *WtVec_get(const WtVec *ov, size_t index) {
+    return ((Wavetable **)(ov->vec->data))[index];
+}
+
+size_t WtVec_size(const WtVec *ov) { return ov->vec->size; }
+
+void WtVec_destroy(WtVec *ov) {
+    Vec_destroy(ov->vec);
+    free(ov);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "stddef.h"
+#include "vec.h"
 
 typedef enum {
     WAVEFORM_SINE,
@@ -15,6 +16,16 @@ typedef struct {
     Waveform type;
 } Wavetable;
 
-Wavetable *wavetable_create(Waveform type, size_t length);
-void wavetable_set_custom(Wavetable *wt, float *data, size_t length);
-void wavetable_destroy(Wavetable *wt);
+Wavetable *Wavetable_create(Waveform type, size_t length);
+void Wavetable_set_custom(Wavetable *wt, float *data, size_t length);
+void Wavetable_destroy(Wavetable *wt);
+
+typedef struct {
+    Vec *vec;
+} WtVec;
+
+WtVec *WtVec_create(void);
+void WtVec_push(WtVec *wv, Wavetable *wt);
+Wavetable *WtVec_get(const WtVec *wv, size_t index);
+size_t WtVec_size(const WtVec *wv);
+void WtVec_destroy(WtVec *wv);
