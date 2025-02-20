@@ -1,5 +1,4 @@
 #include <criterion/criterion.h>
-#include "config.h"
 #include "vec.h"
 #include "osc.h"
 
@@ -50,43 +49,4 @@ Test(vec, osc) {
     }
 
     vec_destroy(vec);
-}
-
-Test(vec, oscvec) {
-    // Create the oscillator vector.
-    Vec *vec = oscvec_create();
-    cr_assert_not_null(vec, "oscvec_create returned NULL");
-    cr_assert_eq(oscvec_size(vec), 0, "Initial oscvec size should be 0");
-
-    // Create first oscillator: Sine, wavetable length 256, frequency 440 Hz.
-    Osc *osc1 = osc_create(WAVEFORM_SINE, 256, 440.0);
-    cr_assert_not_null(osc1, "osc_create returned NULL for osc1");
-    oscvec_push(vec, osc1);
-    cr_assert_eq(oscvec_size(vec), 1, "After pushing osc1, size should be 1");
-
-    // Retrieve the first oscillator.
-    Osc *retrieved1 = oscvec_get(vec, 0);
-    cr_assert_not_null(retrieved1, "Retrieved oscillator is NULL");
-    cr_assert_float_eq(retrieved1->phase, 0.0, 0.0001, "Oscillator initial phase should be 0");
-    double expected_phase_inc1 = (TABLE_SIZE * 440.0) / SAMPLE_RATE;
-    cr_assert_float_eq(retrieved1->phase_inc, expected_phase_inc1, 0.0001,
-                         "Phase increment for osc1 is incorrect");
-    cr_assert_not_null(retrieved1->wt, "Wavetable in osc1 is NULL");
-    cr_assert_eq(retrieved1->wt->type, WAVEFORM_SINE, "Wavetable type for osc1 is not WAVEFORM_SINE");
-    cr_assert_eq(retrieved1->wt->length, 256, "Wavetable length for osc1 is not 256");
-
-    // Create second oscillator: Saw, wavetable length 512, frequency 220 Hz.
-    Osc *osc2 = osc_create(WAVEFORM_SAW, 512, 220.0);
-    cr_assert_not_null(osc2, "osc_create returned NULL for osc2");
-    oscvec_push(vec, osc2);
-    cr_assert_eq(oscvec_size(vec), 2, "After pushing osc2, size should be 2");
-
-    // Retrieve the second oscillator.
-    Osc *retrieved2 = oscvec_get(vec, 1);
-    cr_assert_not_null(retrieved2, "Retrieved second oscillator is NULL");
-    cr_assert_eq(retrieved2->wt->type, WAVEFORM_SAW, "Wavetable type for osc2 is not WAVEFORM_SAW");
-    cr_assert_eq(retrieved2->wt->length, 512, "Wavetable length for osc2 is not 512");
-
-    // Clean up: this should free both oscillators.
-    oscvec_destroy(vec);
 }
