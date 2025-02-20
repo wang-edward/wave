@@ -47,5 +47,5 @@ jobs:
       - name: Run Unit tests
         run: |
           # ./build/unit_tests --verbose=1
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./unit_tests
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/unit_tests
 
