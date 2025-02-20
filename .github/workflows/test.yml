@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install cmake ccache libcriterion-dev libsoundio-dev \
+          sudo apt install cmake ccache valgrind libcriterion-dev libsoundio-dev \
             libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev \
             libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev libglfw3-dev
           mkdir -p ~/.ccache
@@ -46,4 +46,6 @@ jobs:
           cmake --build .
       - name: Run Unit tests
         run: |
-          ./build/unit_tests --verbose=1
+          # ./build/unit_tests --verbose=1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/unit_tests --verbose=1
+
