@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
+Vec *Vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     assert(element_size > 0);
 
     Vec *vec = malloc(sizeof(Vec));
@@ -26,7 +26,7 @@ Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     return vec;
 }
 
-void vec_destroy(Vec *vec) {
+void Vec_destroy(Vec *vec) {
     assert(vec);
 
     if (vec->destroy_func) {
@@ -39,7 +39,7 @@ void vec_destroy(Vec *vec) {
     free(vec);
 }
 
-void vec_push_back(Vec *vec, const void *element) {
+void Vec_push_back(Vec *vec, const void *element) {
     assert(vec);
     assert(element);
 
@@ -57,14 +57,14 @@ void vec_push_back(Vec *vec, const void *element) {
     vec->size++;
 }
 
-void vec_get(const Vec *vec, size_t index, void *out_element) {
+void Vec_get(const Vec *vec, size_t index, void *out_element) {
     cr_assert(vec);
     cr_assert(index < vec->size);
 
     memcpy(out_element, (char *)vec->data + index * vec->element_size, vec->element_size);
 }
 
-void vec_set(Vec *vec, size_t index, const void *element) {
+void Vec_set(Vec *vec, size_t index, const void *element) {
     assert(vec);
     assert(element);
     assert(index < vec->size);
@@ -72,7 +72,7 @@ void vec_set(Vec *vec, size_t index, const void *element) {
     memcpy((char *)vec->data + index * vec->element_size, element, vec->element_size);
 }
 
-void vec_pop_back(Vec *vec) {
+void Vec_pop_back(Vec *vec) {
     assert(vec);
     assert(vec->size > 0);
 

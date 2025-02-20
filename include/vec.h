@@ -13,9 +13,9 @@ typedef struct {
     ElemDestroyFunc destroy_func; // Function pointer for element deletion
 } Vec;
 
-Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func);
-void vec_push_back(Vec *vec, const void *element);
-void vec_get(const Vec *vec, size_t index, void *out_element);
-void vec_set(Vec *vec, size_t index, const void *element);
-void vec_pop_back(Vec *vec);
-void vec_destroy(Vec *vec);
+Vec *Vec_create(size_t element_size, ElemDestroyFunc destroy_func);
+void Vec_push_back(Vec *vec, const void *element);
+void Vec_get(const Vec *vec, size_t index, void *out_element);
+void Vec_set(Vec *vec, size_t index, const void *element);
+void Vec_pop_back(Vec *vec);
+void Vec_destroy(Vec *vec);
