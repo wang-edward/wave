@@ -40,10 +40,8 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ hashFiles('**/CMakeLists.txt') }}-${{ env.DOWNLOAD_CACHE_VERSION }}
       - name: Compile with CMake
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -D CMAKE_BUILD_TYPE=Debug -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
-          cmake --build .
+          cmake -B build -D CMAKE_BUILD_TYPE=Debug -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build --parallel $(nproc)
       - name: Run Unit tests
         run: |
           # ./build/unit_tests --verbose=1
