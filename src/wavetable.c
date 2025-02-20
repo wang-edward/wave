@@ -52,7 +52,6 @@ Wavetable *wavetable_create(Waveform type, size_t length) {
 }
 
 void wavetable_destroy(Wavetable *wt) {
-    printf("wavetable_destroy: %d\n", wt);
     cr_assert(wt);
     free(wt->data);
     free(wt);

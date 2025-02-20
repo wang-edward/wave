@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <criterion/criterion.h>
 
 Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     assert(element_size > 0);
@@ -31,7 +32,7 @@ void vec_destroy(Vec *vec) {
     if (vec->destroy_func) {
         for (size_t i = 0; i < vec->size; i++) {
             void *elem_ptr = (char *)vec->data + i * vec->element_size;
-            vec->destroy_func(elem_ptr);
+            vec->destroy_func(*(void **)elem_ptr);
         }
     }
     free(vec->data);
@@ -57,9 +58,8 @@ void vec_push_back(Vec *vec, const void *element) {
 }
 
 void vec_get(const Vec *vec, size_t index, void *out_element) {
-    assert(vec);
-    assert(index < vec->size);
-    assert(out_element);
+    cr_assert(vec);
+    cr_assert(index < vec->size);
 
     memcpy(out_element, (char *)vec->data + index * vec->element_size, vec->element_size);
 }

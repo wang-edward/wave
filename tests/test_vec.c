@@ -27,7 +27,6 @@ Test(vec, osc_push_get_and_destroy) {
     // Create a vector for Osc pointers.
     // We are storing Osc* elements, so the element size is sizeof(Osc*).
     // The destroy function is set to osc_destroy so that each Osc is cleaned up.
-    printf("start: ---------\n");
     Vec *vec = vec_create(sizeof(Osc*), (ElemDestroyFunc)osc_destroy);
     cr_assert_not_null(vec, "vec_create returned NULL for Osc vector");
     cr_assert_eq(vec->size, 0, "Initial Osc vector size should be 0");
@@ -49,7 +48,5 @@ Test(vec, osc_push_get_and_destroy) {
         // Optionally, you can add more detailed tests of the Osc's properties here.
     }
 
-    printf("before: ---------\n");
     vec_destroy(vec);
-    printf("after: ---------\n");
 }
