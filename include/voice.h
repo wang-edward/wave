@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec.h"
+#include "osc.h"
 
 typedef struct {
     OscVec oscs;
