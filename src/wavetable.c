@@ -64,7 +64,9 @@ WtVec *WtVec_create(void) {
 
 void WtVec_push(WtVec *ov, Wavetable *osc) { vec_push_back(ov->vec, &osc); }
 
-Wavetable *WtVec_get(const WtVec *ov, size_t index) { return ((Wavetable **)(ov->vec->data))[index]; }
+Wavetable *WtVec_get(const WtVec *ov, size_t index) {
+    return ((Wavetable **)(ov->vec->data))[index];
+}
 
 size_t WtVec_size(const WtVec *ov) { return ov->vec->size; }
 
