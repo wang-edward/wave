@@ -25,21 +25,15 @@ void osc_destroy(Osc *osc) {
 
 OscVec *oscvec_create(void) {
     OscVec *ov = malloc(sizeof(OscVec));
-    ov->vec = vec_create(sizeof(Osc*), (ElemDestroyFunc)osc_destroy);
+    ov->vec = vec_create(sizeof(Osc *), (ElemDestroyFunc)osc_destroy);
     return ov;
 }
 
-void oscvec_push(OscVec *ov, Osc *osc) {
-    vec_push_back(ov->vec, &osc);
-}
+void oscvec_push(OscVec *ov, Osc *osc) { vec_push_back(ov->vec, &osc); }
 
-Osc *oscvec_get(const OscVec *ov, size_t index) {
-    return ((Osc **)(ov->vec->data))[index];
-}
+Osc *oscvec_get(const OscVec *ov, size_t index) { return ((Osc **)(ov->vec->data))[index]; }
 
-size_t oscvec_size(const OscVec *ov) {
-    return ov->vec->size;
-}
+size_t oscvec_size(const OscVec *ov) { return ov->vec->size; }
 
 void oscvec_destroy(OscVec *ov) {
     vec_destroy(ov->vec);
