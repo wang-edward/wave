@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     (void)argv;
     // Create a vector for Osc pointers.
     // We pass osc_destroy as the element destroy function so that each Osc is properly freed.
-    Vec *osc_vec = vec_create(sizeof(Osc*), (ElemDestroyFunc)osc_destroy);
+    Vec *osc_vec = vec_create(sizeof(Osc *), (ElemDestroyFunc)osc_destroy);
     double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
 
     // Create oscillators with different wavetable resolutions.

@@ -1,9 +1,9 @@
 #include "vec.h"
+#include <assert.h>
+#include <criterion/criterion.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <criterion/criterion.h>
 
 Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func) {
     assert(element_size > 0);

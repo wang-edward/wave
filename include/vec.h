@@ -4,14 +4,14 @@
 
 #define VEC_INIT_CAPACITY 4
 
-typedef void (*ElemDestroyFunc)(void*);
+typedef void (*ElemDestroyFunc)(void *);
 
 typedef struct {
-    void *data;          // Pointer to the array's data
-    size_t element_size; // Size of each element
-    size_t size;         // Number of elements currently stored
-    size_t capacity;     // Allocated capacity
-    ElemDestroyFunc destroy_func;  // Function pointer for element deletion
+    void *data;                   // Pointer to the array's data
+    size_t element_size;          // Size of each element
+    size_t size;                  // Number of elements currently stored
+    size_t capacity;              // Allocated capacity
+    ElemDestroyFunc destroy_func; // Function pointer for element deletion
 } Vec;
 
 Vec *vec_create(size_t element_size, ElemDestroyFunc destroy_func);

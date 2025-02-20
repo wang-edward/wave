@@ -1,5 +1,4 @@
 #include "wavetable.h"
-#include "wavetable.h"
 #include <assert.h>
 #include <criterion/criterion.h>
 #include <math.h>
