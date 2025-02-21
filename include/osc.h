@@ -12,12 +12,4 @@ Osc *Osc_create(Waveform type, size_t length, double freq);
 void Osc_set_freq(Osc *osc, double freq);
 void Osc_destroy(Osc *osc);
 
-typedef struct {
-    Vec *vec;
-} OscVec;
-
-OscVec *OscVec_create(void);
-void OscVec_push(OscVec *ov, Osc *osc);
-Osc *OscVec_get(const OscVec *ov, size_t index);
-size_t OscVec_size(const OscVec *ov);
-void OscVec_destroy(OscVec *ov);
+DECLARE_VEC_TYPE(Osc *, OscPtr, (ElemDestroyFunc)Osc_destroy)

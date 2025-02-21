@@ -22,20 +22,3 @@ void Osc_destroy(Osc *osc) {
     Wavetable_destroy(osc->wt);
     free(osc);
 }
-
-OscVec *OscVec_create(void) {
-    OscVec *ov = malloc(sizeof(OscVec));
-    ov->vec = Vec_create(sizeof(Osc *), (ElemDestroyFunc)Osc_destroy);
-    return ov;
-}
-
-void OscVec_push(OscVec *ov, Osc *osc) { Vec_push_back(ov->vec, &osc); }
-
-Osc *OscVec_get(const OscVec *ov, size_t index) { return ((Osc **)(ov->vec->data))[index]; }
-
-size_t OscVec_size(const OscVec *ov) { return ov->vec->size; }
-
-void OscVec_destroy(OscVec *ov) {
-    Vec_destroy(ov->vec);
-    free(ov);
-}
