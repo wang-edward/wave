@@ -12,4 +12,4 @@ Osc *Osc_create(Waveform type, size_t length, double freq);
 void Osc_set_freq(Osc *osc, double freq);
 void Osc_destroy(Osc *osc);
 
-DECLARE_VEC_TYPE(Osc*, OscPtr, (ElemDestroyFunc)Osc_destroy)
+DECLARE_VEC_TYPE(Osc *, OscPtr, (ElemDestroyFunc)Osc_destroy)

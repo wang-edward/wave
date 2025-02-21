@@ -1,7 +1,7 @@
 #pragma once
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #define VEC_INIT_CAPACITY 4
 
@@ -33,29 +33,29 @@ void Vec_destroy(Vec *vec);
  *  - A typedef for a structure wrapping a generic Vec pointer.
  *  - Inline functions for creating, destroying, pushing back, and getting elements.
  */
-#define DECLARE_VEC_TYPE(Type, Name, DestroyFunc)                         \
-typedef struct {                                                            \
-    Vec *vec;                                                               \
-} Vec_##Name;                                                               \
-                                                                            \
-static inline Vec_##Name *Vec_##Name##_create(void) {                       \
-    Vec_##Name *typed = malloc(sizeof(Vec_##Name));                         \
-    assert(typed && "Failed to allocate typed vector");                     \
-    typed->vec = Vec_create(sizeof(Type), DestroyFunc);                     \
-    return typed;                                                           \
-}                                                                           \
-                                                                            \
-static inline void Vec_##Name##_destroy(Vec_##Name *typed) {                \
-    Vec_destroy(typed->vec);                                                \
-    free(typed);                                                            \
-}                                                                           \
-                                                                            \
-static inline void Vec_##Name##_push_back(Vec_##Name *typed, Type item) {     \
-    Vec_push_back(typed->vec, &item);                                         \
-}                                                                           \
-                                                                            \
-static inline Type Vec_##Name##_get(const Vec_##Name *typed, size_t index) {  \
-    Type temp;                                                              \
-    Vec_get(typed->vec, index, &temp);                                        \
-    return temp;                                                            \
-}
+#define DECLARE_VEC_TYPE(Type, Name, DestroyFunc)                                                  \
+    typedef struct {                                                                               \
+        Vec *vec;                                                                                  \
+    } Vec_##Name;                                                                                  \
+                                                                                                   \
+    static inline Vec_##Name *Vec_##Name##_create(void) {                                          \
+        Vec_##Name *typed = malloc(sizeof(Vec_##Name));                                            \
+        assert(typed && "Failed to allocate typed vector");                                        \
+        typed->vec = Vec_create(sizeof(Type), DestroyFunc);                                        \
+        return typed;                                                                              \
+    }                                                                                              \
+                                                                                                   \
+    static inline void Vec_##Name##_destroy(Vec_##Name *typed) {                                   \
+        Vec_destroy(typed->vec);                                                                   \
+        free(typed);                                                                               \
+    }                                                                                              \
+                                                                                                   \
+    static inline void Vec_##Name##_push_back(Vec_##Name *typed, Type item) {                      \
+        Vec_push_back(typed->vec, &item);                                                          \
+    }                                                                                              \
+                                                                                                   \
+    static inline Type Vec_##Name##_get(const Vec_##Name *typed, size_t index) {                   \
+        Type temp;                                                                                 \
+        Vec_get(typed->vec, index, &temp);                                                         \
+        return temp;                                                                               \
+    }
