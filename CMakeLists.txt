@@ -18,11 +18,8 @@ else()
 endif()
 
 # List your source files
-set(SOURCES
-    src/main.c
-    src/osc.c
-    src/vec.c
-    src/wavetable.c
+file(GLOB SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*"
 )
 
 # Create the executable target
@@ -39,7 +36,7 @@ enable_testing()
 
 # Define unit test sources
 file(GLOB TEST_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/tests/*"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/tests/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*"
 )
 list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c")

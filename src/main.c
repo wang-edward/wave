@@ -1,5 +1,5 @@
 #include <math.h>
-#include <pthread.h> // For mutex
+#include <pthread.h>
 #include <raylib.h>
 #include <soundio/soundio.h>
 #include <stdio.h>
@@ -7,18 +7,16 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "osc.h"
-#include "vec.h"
+#include "state.h"
 
-// Global mutex to protect oscillator state.
-static pthread_mutex_t Osc_mutex = PTHREAD_MUTEX_INITIALIZER;
+// Global mutex to protect State during audio callback and UI updates.
+static pthread_mutex_t state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// The write callback: libsoundio calls this when it needs more audio samples.
-// Now we use each oscillator's own wavetable length.
+// The audio write callback.
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
                            int frame_count_max) {
     (void)frame_count_min;
-    Vec *Osc_vec = (Vec *)outstream->userdata;
+    State *state = (State *)outstream->userdata;
     int frames_left = frame_count_max;
 
     while (frames_left > 0) {
@@ -34,34 +32,10 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
 
         for (int frame = 0; frame < frame_count; frame++) {
             float sample = 0.0f;
-
-            pthread_mutex_lock(&Osc_mutex);
-            // Mix output from each oscillator.
-            for (size_t i = 0; i < Osc_vec->size; i++) {
-                // Retrieve the Osc* stored at index i.
-                Osc *osc = ((Osc **)(Osc_vec->data))[i];
-                // Use the actual wavetable length for indexing.
-                size_t wt_length = osc->wt->length;
-                double pos = osc->phase;
-                int index0 = (int)pos;
-                int index1 = (index0 + 1) % wt_length;
-                double frac = pos - index0;
-                float Osc_sample =
-                    (float)((1.0 - frac) * osc->wt->data[index0] + frac * osc->wt->data[index1]);
-                sample += Osc_sample;
-
-                // Increment phase and wrap around using the actual wavetable length.
-                osc->phase += osc->phase_inc;
-                if (osc->phase >= wt_length)
-                    osc->phase -= wt_length;
-            }
-            pthread_mutex_unlock(&Osc_mutex);
-
-            // Average the mixed sample.
-            if (Osc_vec->size > 0)
-                sample /= Osc_vec->size;
-
-            // Write the sample to all output channels.
+            pthread_mutex_lock(&state_mutex);
+            sample = State_mix_sample(state);
+            pthread_mutex_unlock(&state_mutex);
+            // Write the sample to each channel.
             for (int ch = 0; ch < outstream->layout.channel_count; ch++) {
                 char *ptr = areas[ch].ptr + areas[ch].step * frame;
                 *((float *)ptr) = sample;
@@ -77,27 +51,30 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
     }
 }
 
+// Note mapping structure.
+typedef struct {
+    int key;         // Raylib key code.
+    int voice;       // voice index (0 .. NUM_VOICES-1)
+    double freq;     // Frequency in Hz.
+} NoteMapping;
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
-    // Create a vector for Osc pointers.
-    // We pass Osc_destroy as the element destroy function so that each Osc is properly freed.
-    Vec *Osc_vec = Vec_create(sizeof(Osc *), (ElemDestroyFunc)Osc_destroy);
-    double freq0 = 440.0, freq1 = 550.0, freq2 = 660.0;
 
-    // Create oscillators with different wavetable resolutions.
-    // For example:
-    //   - A high-resolution sine (1024 samples),
-    //   - A medium-resolution saw (256 samples),
-    //   - A low-resolution square (16 samples) for a bitcrushed effect.
-    Osc *tempA = Osc_create(WAVEFORM_SINE, 1024, freq0);
-    Osc *tempB = Osc_create(WAVEFORM_SAW, 256, freq1);
-    Osc *tempC = Osc_create(WAVEFORM_SQUARE, 16, freq2);
+    // Create the global state.
+    State *state = State_create();
 
-    // Push the Osc pointers into the vector.
-    Vec_push_back(Osc_vec, &tempA);
-    Vec_push_back(Osc_vec, &tempB);
-    Vec_push_back(Osc_vec, &tempC);
+    // Define a simple mapping for a few keys.
+    NoteMapping mappings[] = {
+        { KEY_A, 0, 261.63 },  // C3
+        { KEY_W, 1, 277.18 },
+        { KEY_S, 2, 293.66 },
+        { KEY_E, 3, 311.13 },
+        { KEY_D, 4, 329.63 },
+        // Add more mappings as desired.
+    };
+    const int num_mappings = sizeof(mappings)/sizeof(mappings[0]);
 
     // Initialize libsoundio.
     struct SoundIo *soundio = soundio_create();
@@ -105,15 +82,12 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Out of memory.\n");
         return 1;
     }
-
     int err = soundio_connect(soundio);
     if (err) {
         fprintf(stderr, "Error connecting: %s\n", soundio_strerror(err));
         return 1;
     }
     soundio_flush_events(soundio);
-
-    // Select the default output device.
     int default_out_device_index = soundio_default_output_device_index(soundio);
     if (default_out_device_index < 0) {
         fprintf(stderr, "No output device found.\n");
@@ -126,12 +100,10 @@ int main(int argc, char **argv) {
     }
     printf("Using output device: %s\n", device->name);
 
-    // Create an output stream.
+    // Create output stream.
     struct SoundIoOutStream *outstream = soundio_outstream_create(device);
     outstream->format = SoundIoFormatFloat32NE;
     outstream->sample_rate = SAMPLE_RATE;
-
-    // Choose a channel layout.
     if (device->layout_count > 0) {
         int found = 0;
         for (int i = 0; i < device->layout_count; i++) {
@@ -146,12 +118,9 @@ int main(int argc, char **argv) {
     } else {
         outstream->layout = *soundio_channel_layout_get_default(2);
     }
-
-    // Set our oscillator vector as userdata and assign the callback.
-    outstream->userdata = Osc_vec;
+    outstream->userdata = state;
     outstream->write_callback = write_callback;
 
-    // Open and start the output stream.
     err = soundio_outstream_open(outstream);
     if (err) {
         fprintf(stderr, "Error opening stream: %s\n", soundio_strerror(err));
@@ -166,73 +135,31 @@ int main(int argc, char **argv) {
     }
 
     // Initialize Raylib window.
-    InitWindow(480, 480, "Multiple Oscillators with Variable Wavetable Lengths");
+    InitWindow(640, 480, "Polyphonic Synthesizer");
+    SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
+        // For each mapping, if the key is down, set the note; else, clear the voice.
+        pthread_mutex_lock(&state_mutex);
+        for (int i = 0; i < num_mappings; i++) {
+            if (IsKeyDown(mappings[i].key)) {
+                State_set_note(state, mappings[i].voice, mappings[i].freq);
+            } else {
+                State_clear_voice(state, mappings[i].voice);
+            }
+        }
+        pthread_mutex_unlock(&state_mutex);
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        DrawText("Oscillator Frequency Controls:", 10, 10, 20, DARKGRAY);
-        DrawText("Osc 0: UP/DOWN", 10, 40, 20, DARKGRAY);
-        DrawText("Osc 1: RIGHT/LEFT", 10, 70, 20, DARKGRAY);
-        DrawText("Osc 2: W/S", 10, 100, 20, DARKGRAY);
-
-        // Adjust oscillator 0 with UP/DOWN keys.
-        if (IsKeyPressed(KEY_UP)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq0 += 10.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[0], freq0);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-        if (IsKeyPressed(KEY_DOWN)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq0 -= 10.0;
-            if (freq0 < 1.0)
-                freq0 = 1.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[0], freq0);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-
-        // Adjust oscillator 1 with RIGHT/LEFT keys.
-        if (IsKeyPressed(KEY_RIGHT)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq1 += 10.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[1], freq1);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-        if (IsKeyPressed(KEY_LEFT)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq1 -= 10.0;
-            if (freq1 < 1.0)
-                freq1 = 1.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[1], freq1);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-
-        // Adjust oscillator 2 with W/S keys.
-        if (IsKeyPressed(KEY_W)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq2 += 10.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[2], freq2);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-        if (IsKeyPressed(KEY_S)) {
-            pthread_mutex_lock(&Osc_mutex);
-            freq2 -= 10.0;
-            if (freq2 < 1.0)
-                freq2 = 1.0;
-            Osc_set_freq(((Osc **)(Osc_vec->data))[2], freq2);
-            pthread_mutex_unlock(&Osc_mutex);
-        }
-
+        DrawText("Press keys A, W, S, E, D to play notes", 10, 10, 20, DARKGRAY);
         EndDrawing();
     }
 
-    // Clean up.
     CloseWindow();
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);
     soundio_destroy(soundio);
-    Vec_destroy(Osc_vec);
-
+    State_destroy(state);
     return 0;
 }
