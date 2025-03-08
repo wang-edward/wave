@@ -146,7 +146,6 @@ int main(void) {
     InitWindow(640, 480, "Polyphonic Synthesizer");
     SetTargetFPS(60);
 
-    // Main loop.
     while (!WindowShouldClose()) {
         pthread_mutex_lock(&state_mutex);
         // Process white keys.
@@ -198,28 +197,41 @@ int main(void) {
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        DrawText("White keys (C3 to B3): A, S, D, F, G, H, J", 10, 10, 20, DARKGRAY);
-        DrawText("Black keys (C#3, D#3, F#3, G#3, A#3): W, E, T, Y, U", 10, 40, 20, DARKGRAY);
-        DrawText("Adjust Levels: 1/2 for wt[0], 3/4 for wt[1], 5/6 for wt[2], 7/8 for wt[3]", 10, 70, 20, DARKGRAY);
 
         // Draw wavetable level bars.
         const int bar_width = 50;
         const int bar_height = 100;
         const int bar_spacing = 20;
         int bar_x = 10;
-        int bar_y = GetScreenHeight() - bar_height - 10;
+        int bar_y = GetScreenHeight() - bar_height - 20;
         for (int i = 0; i < NUM_WAVETABLES; i++) {
             // Draw outline rectangle.
             DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, BLACK);
             // Determine filled height (from bottom up).
             int fill_height = (int)(state->wt_levels[i] * bar_height);
             DrawRectangle(bar_x, bar_y + (bar_height - fill_height), bar_width, fill_height, GREEN);
-            // Display the level value above the bar.
+
+            // draw name
+            char name_text[16];
+            if (i == 0) {
+                sprintf(name_text, "SIN");
+            } else if (i == 1) {
+                sprintf(name_text, "SAW");
+            } else if (i == 2) {
+                sprintf(name_text, "SQR");
+            } else if (i == 3) {
+                sprintf(name_text, "TRI");
+            }
+            DrawText(name_text, bar_x, bar_y + bar_height, 20, DARKGRAY);
+
+            // draw level
             char level_text[16];
             sprintf(level_text, "%.1f", state->wt_levels[i]);
             DrawText(level_text, bar_x, bar_y - 20, 20, DARKGRAY);
             bar_x += bar_width + bar_spacing;
+
         }
+
         EndDrawing();
     }
 
