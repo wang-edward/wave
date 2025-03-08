@@ -68,7 +68,6 @@ void State_clear_voice(State *state, int voice) {
 
 float State_mix_sample(State *state) {
     float mix = 0.0f;
-    int active_count = 0;
     for (int voice = 0; voice < NUM_VOICES; voice++) {
         if (state->active[voice]) {
             float voice_sum = 0.0f;
@@ -78,7 +77,7 @@ float State_mix_sample(State *state) {
                 Wavetable *wt = &state->wts[osc->wt_index];
                 size_t len = wt->length;
                 double pos = osc->phase;
-                int index0 = (int) pos;
+                int index0 = (int)pos;
                 int index1 = (index0 + 1) % len;
                 double frac = pos - index0;
                 float sample = (float)((1.0 - frac) * wt->data[index0] + frac * wt->data[index1]);
@@ -88,12 +87,10 @@ float State_mix_sample(State *state) {
                 if (osc->phase >= len)
                     osc->phase -= len;
             }
+            // Average the oscillators in this voice.
             voice_sum /= NUM_OSCS;
             mix += voice_sum;
-            active_count++;
         }
     }
-    if (active_count > 0)
-        mix /= active_count;
     return mix;
 }
