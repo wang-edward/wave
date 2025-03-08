@@ -7,10 +7,13 @@
 #include "config.h"
 #include "state.h"
 
-// Global mutex for protecting synth state.
 static pthread_mutex_t state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Audio write callback.
+#define PREVIEW_SIZE 1024
+static float previewBuffer[PREVIEW_SIZE] = {0};
+static int previewIndex = 0;
+static pthread_mutex_t preview_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
                            int frame_count_max) {
     (void)frame_count_min;
@@ -31,6 +34,13 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             pthread_mutex_lock(&state_mutex);
             sample = State_mix_sample(state);
             pthread_mutex_unlock(&state_mutex);
+            // Write sample to the preview buffer (using trylock to minimize blocking)
+            if (pthread_mutex_trylock(&preview_mutex) == 0) {
+                previewBuffer[previewIndex] = sample;
+                previewIndex = (previewIndex + 1) % PREVIEW_SIZE;
+                pthread_mutex_unlock(&preview_mutex);
+            }
+            // Write the same sample to all channels.
             for (int ch = 0; ch < outstream->layout.channel_count; ch++) {
                 char *ptr = areas[ch].ptr + areas[ch].step * frame;
                 *((float *)ptr) = sample;
@@ -45,7 +55,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
     }
 }
 
-// --- New key mapping for one octave ---
+// --- Key Mapping for one octave ---
 //
 // White keys (naturals):
 //   A -> C3 (offset 0)
@@ -90,7 +100,7 @@ const NoteMapping black_keys[NUM_BLACK_KEYS] = {
     { KEY_U, 10 }   // A♯3
 };
 
-// Active voice mapping for each note key. A value of -1 indicates no active voice.
+// Active voice mapping for each note key (-1 indicates no active voice).
 int active_voice[NUM_NOTE_KEYS];
 
 int main(void) {
@@ -143,7 +153,7 @@ int main(void) {
     if (err) { fprintf(stderr, "Error starting stream: %s\n", soundio_strerror(err)); return 1; }
 
     // Initialize Raylib window.
-    InitWindow(640, 480, "Polyphonic Synthesizer");
+    InitWindow(640, 480, "wave");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
@@ -188,7 +198,7 @@ int main(void) {
         if (IsKeyPressed(KEY_SIX)) state->wt_levels[2] -= 0.1f;
         if (IsKeyPressed(KEY_SEVEN)) state->wt_levels[3] += 0.1f;
         if (IsKeyPressed(KEY_EIGHT)) state->wt_levels[3] -= 0.1f;
-        // Clamp each level to the range [0.0, 1.0].
+        // Clamp levels to [0.0, 1.0]
         state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
         state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
         state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
@@ -198,38 +208,61 @@ int main(void) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        // Draw wavetable level bars.
+        // --- Draw oscilloscope preview ---
+        const int preview_x = 10;
+        const int preview_y = 10;
+        const int preview_width = GetScreenWidth() - 20;
+        const int preview_height = 300;
+        // Draw preview background and border.
+        DrawRectangle(preview_x, preview_y, preview_width, preview_height, LIGHTGRAY);
+        DrawRectangleLines(preview_x, preview_y, preview_width, preview_height, BLACK);
+        // Copy previewBuffer into a local array.
+        float localPreview[PREVIEW_SIZE];
+        pthread_mutex_lock(&preview_mutex);
+        int start = previewIndex; // oldest sample is here
+        for (int i = 0; i < PREVIEW_SIZE; i++) {
+            localPreview[i] = previewBuffer[(start + i) % PREVIEW_SIZE];
+        }
+        pthread_mutex_unlock(&preview_mutex);
+        // Create an array of points for drawing the waveform.
+        Vector2 points[PREVIEW_SIZE];
+        for (int i = 0; i < PREVIEW_SIZE; i++) {
+            float x = preview_x + ((float)i / (PREVIEW_SIZE - 1)) * preview_width;
+            // Scale factor: assume maximum amplitude is roughly 5.0 (the gain factor)
+            float scale = preview_height / 10.0f;
+            float y = preview_y + preview_height/2 - localPreview[i] * scale;
+            points[i] = (Vector2){ x, y };
+        }
+        for (int i = 0; i < PREVIEW_SIZE - 1; i++) {
+            DrawLineEx(points[i], points[i+1], 3.0f, RED);
+        }
+
+        // --- Draw wavetable level bars and labels ---
         const int bar_width = 50;
         const int bar_height = 100;
         const int bar_spacing = 20;
         int bar_x = 10;
         int bar_y = GetScreenHeight() - bar_height - 20;
         for (int i = 0; i < NUM_WAVETABLES; i++) {
-            // Draw outline rectangle.
             DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, BLACK);
-            // Determine filled height (from bottom up).
             int fill_height = (int)(state->wt_levels[i] * bar_height);
             DrawRectangle(bar_x, bar_y + (bar_height - fill_height), bar_width, fill_height, GREEN);
-
-            // draw name
+            // Draw waveform label.
             char name_text[16];
-            if (i == 0) {
+            if (i == 0)
                 sprintf(name_text, "SIN");
-            } else if (i == 1) {
+            else if (i == 1)
                 sprintf(name_text, "SAW");
-            } else if (i == 2) {
+            else if (i == 2)
                 sprintf(name_text, "SQR");
-            } else if (i == 3) {
+            else if (i == 3)
                 sprintf(name_text, "TRI");
-            }
             DrawText(name_text, bar_x, bar_y + bar_height, 20, DARKGRAY);
-
-            // draw level
+            // Draw level text.
             char level_text[16];
             sprintf(level_text, "%.1f", state->wt_levels[i]);
             DrawText(level_text, bar_x, bar_y - 20, 20, DARKGRAY);
             bar_x += bar_width + bar_spacing;
-
         }
 
         EndDrawing();
