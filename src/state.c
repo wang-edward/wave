@@ -10,12 +10,15 @@ const int NUM_VOICES = 12;  // increased to cover all keys
 State *State_create(void) {
     State *state = malloc(sizeof(State));
     assert(state);
-    state->oscs = calloc(NUM_VOICES * NUM_OSCS, sizeof(Osc));
+    state->oscs = malloc(NUM_VOICES * NUM_OSCS * sizeof(Osc));
     assert(state->oscs);
     state->wts = malloc(NUM_WAVETABLES * sizeof(Wavetable));
     assert(state->wts);
     state->wt_levels = malloc(NUM_WAVETABLES * sizeof(float));
     assert(state->wt_levels);
+    for (int i = 0; i < NUM_VOICES * NUM_OSCS; i++) {
+        state->oscs[i] = Osc_create(i % 4, 0); // TODO generalize to n wavetables
+    }
     for (int i = 0; i < NUM_WAVETABLES; i++) {
         state->wt_levels[i] = 1.0f;
     }
