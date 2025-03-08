@@ -5,7 +5,7 @@
 
 const int NUM_OSCS = 4;
 const int NUM_WAVETABLES = 4;
-const int NUM_VOICES = 8;
+const int NUM_VOICES = 12;  // increased to cover all keys
 
 State *State_create(void) {
     State *state = malloc(sizeof(State));

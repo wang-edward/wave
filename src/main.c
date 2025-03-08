@@ -45,33 +45,52 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
     }
 }
 
-// Note mapping for a full piano octave (including sharps/flats) based on QWERTY keys.
-// We'll use a common mapping for one octave starting at C3:
-// White keys: Z (C3), X (D3), C (E3), V (F3), B (G3), N (A3), M (B3), Comma (C4)
-// Black keys: S (C#3), D (D#3), G (F#3), H (G#3), J (A#3)
+// --- New key mapping for one octave ---
+//
+// White keys (naturals):
+//   A -> C3 (offset 0)
+//   S -> D3 (offset 2)
+//   D -> E3 (offset 4)
+//   F -> F3 (offset 5)
+//   G -> G3 (offset 7)
+//   H -> A3 (offset 9)
+//   J -> B3 (offset 11)
+//
+// Black keys (accidentals):
+//   W -> C♯3 (offset 1)
+//   E -> D♯3 (offset 3)
+//   T -> F♯3 (offset 6)
+//   Y -> G♯3 (offset 8)
+//   U -> A♯3 (offset 10)
+//
 typedef struct {
-    int key;           // Raylib key code.
+    int key;             // Raylib key code.
     int semitone_offset; // Semitone offset from base note C3.
 } NoteMapping;
 
-const int NUM_NOTE_KEYS = 13;
-const NoteMapping note_keys[13] = {
-    { KEY_Z,  0 },  // C3
-    { KEY_S,  1 },  // C#3
-    { KEY_X,  2 },  // D3
-    { KEY_D,  3 },  // D#3
-    { KEY_C,  4 },  // E3
-    { KEY_V,  5 },  // F3
-    { KEY_G,  6 },  // F#3
-    { KEY_B,  7 },  // G3
-    { KEY_H,  8 },  // G#3
-    { KEY_N,  9 },  // A3
-    { KEY_J, 10 },  // A#3
-    { KEY_M, 11 },  // B3
-    { KEY_COMMA, 12 } // C4
+#define NUM_WHITE_KEYS 7
+#define NUM_BLACK_KEYS 5
+#define NUM_NOTE_KEYS (NUM_WHITE_KEYS + NUM_BLACK_KEYS)
+
+const NoteMapping white_keys[NUM_WHITE_KEYS] = {
+    { KEY_A, 0 },   // C3
+    { KEY_S, 2 },   // D3
+    { KEY_D, 4 },   // E3
+    { KEY_F, 5 },   // F3
+    { KEY_G, 7 },   // G3
+    { KEY_H, 9 },   // A3
+    { KEY_J, 11 }   // B3
 };
 
-// Active voice mapping for each note key. -1 means not active.
+const NoteMapping black_keys[NUM_BLACK_KEYS] = {
+    { KEY_W, 1 },   // C♯3
+    { KEY_E, 3 },   // D♯3
+    { KEY_T, 6 },   // F♯3
+    { KEY_Y, 8 },   // G♯3
+    { KEY_U, 10 }   // A♯3
+};
+
+// Active voice mapping for each note key. A value of -1 indicates no active voice.
 int active_voice[NUM_NOTE_KEYS];
 
 int main(void) {
@@ -82,7 +101,7 @@ int main(void) {
     }
     // Base frequency for C3.
     const double base_freq = 130.81;
-    const double semitone_ratio = pow(2.0, 1.0/12.0);
+    const double semitone_ratio = pow(2.0, 1.0 / 12.0);
 
     // Initialize SoundIo.
     struct SoundIo *soundio = soundio_create();
@@ -130,14 +149,11 @@ int main(void) {
     // Main loop.
     while (!WindowShouldClose()) {
         pthread_mutex_lock(&state_mutex);
-        // For each mapped note key, if the key is down then ensure a voice is playing that note,
-        // otherwise clear the voice.
-        for (int i = 0; i < NUM_NOTE_KEYS; i++) {
-            if (IsKeyDown(note_keys[i].key)) {
+        // Process white keys.
+        for (int i = 0; i < NUM_WHITE_KEYS; i++) {
+            if (IsKeyDown(white_keys[i].key)) {
                 if (active_voice[i] == -1) {
-                    double freq = base_freq * pow(semitone_ratio, note_keys[i].semitone_offset);
-                    // We simply use the note mapping index as the voice index.
-                    // (This assumes NUM_NOTE_KEYS <= NUM_VOICES.)
+                    double freq = base_freq * pow(semitone_ratio, white_keys[i].semitone_offset);
                     active_voice[i] = i;
                     State_set_note(state, active_voice[i], freq);
                 }
@@ -148,9 +164,23 @@ int main(void) {
                 }
             }
         }
+        // Process black keys.
+        for (int i = 0; i < NUM_BLACK_KEYS; i++) {
+            int voice_index = i + NUM_WHITE_KEYS;
+            if (IsKeyDown(black_keys[i].key)) {
+                if (active_voice[voice_index] == -1) {
+                    double freq = base_freq * pow(semitone_ratio, black_keys[i].semitone_offset);
+                    active_voice[voice_index] = voice_index;
+                    State_set_note(state, active_voice[voice_index], freq);
+                }
+            } else {
+                if (active_voice[voice_index] != -1) {
+                    State_clear_voice(state, active_voice[voice_index]);
+                    active_voice[voice_index] = -1;
+                }
+            }
+        }
         // Process wavetable level adjustments.
-        // Map keys 1-8: KEY_ONE increases wt[0], KEY_TWO decreases wt[0],
-        // KEY_THREE increases wt[1], KEY_FOUR decreases wt[1], etc.
         if (IsKeyPressed(KEY_ONE)) state->wt_levels[0] += 0.1f;
         if (IsKeyPressed(KEY_TWO)) state->wt_levels[0] -= 0.1f;
         if (IsKeyPressed(KEY_THREE)) state->wt_levels[1] += 0.1f;
@@ -163,8 +193,9 @@ int main(void) {
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        DrawText("Piano Keys (C3 to C4): Z, S, X, D, C, V, G, B, H, N, J, M, COMMA", 10, 10, 20, DARKGRAY);
-        DrawText("Adjust Levels: 1/2 for wt[0], 3/4 for wt[1], 5/6 for wt[2], 7/8 for wt[3]", 10, 40, 20, DARKGRAY);
+        DrawText("White keys (C3 to B3): A, S, D, F, G, H, J", 10, 10, 20, DARKGRAY);
+        DrawText("Black keys (C#3, D#3, F#3, G#3, A#3): W, E, T, Y, U", 10, 40, 20, DARKGRAY);
+        DrawText("Adjust Levels: 1/2 for wt[0], 3/4 for wt[1], 5/6 for wt[2], 7/8 for wt[3]", 10, 70, 20, DARKGRAY);
         EndDrawing();
     }
 
