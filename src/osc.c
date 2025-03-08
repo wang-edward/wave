@@ -1,4 +1,5 @@
 #include "osc.h"
+#include "config.h"
 
 Osc Osc_create(int wt_index, double freq) {
     Osc osc;
