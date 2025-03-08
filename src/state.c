@@ -90,7 +90,6 @@ float State_mix_sample(State *state) {
                 if (osc->phase >= len)
                     osc->phase -= len;
             }
-            // Average the oscillators in this voice.
             voice_sum /= NUM_OSCS;
             mix += voice_sum;
         }
