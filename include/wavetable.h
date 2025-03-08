@@ -1,12 +1,7 @@
 #pragma once
 #include <stdlib.h>
 
-typedef enum {
-    WAVEFORM_SINE,
-    WAVEFORM_SAW,
-    WAVEFORM_SQUARE,
-    WAVEFORM_TRIANGLE
-} Waveform;
+typedef enum { WAVEFORM_SINE, WAVEFORM_SAW, WAVEFORM_SQUARE, WAVEFORM_TRIANGLE } Waveform;
 
 typedef struct {
     float *data;

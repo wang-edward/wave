@@ -1,11 +1,11 @@
 #include "state.h"
 #include "config.h"
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 
 const int NUM_OSCS = 4;
 const int NUM_WAVETABLES = 4;
-const int NUM_VOICES = 12;  // increased to cover all keys
+const int NUM_VOICES = 12; // increased to cover all keys
 
 State *State_create(void) {
     State *state = malloc(sizeof(State));
@@ -28,15 +28,16 @@ State *State_create(void) {
         state->active[i] = 0;
     }
     // Create shared wavetables.
-    state->wts[WAVEFORM_SINE]     = *Wavetable_create(WAVEFORM_SINE, TABLE_SIZE);
-    state->wts[WAVEFORM_SAW]      = *Wavetable_create(WAVEFORM_SAW, TABLE_SIZE);
-    state->wts[WAVEFORM_SQUARE]   = *Wavetable_create(WAVEFORM_SQUARE, TABLE_SIZE);
+    state->wts[WAVEFORM_SINE] = *Wavetable_create(WAVEFORM_SINE, TABLE_SIZE);
+    state->wts[WAVEFORM_SAW] = *Wavetable_create(WAVEFORM_SAW, TABLE_SIZE);
+    state->wts[WAVEFORM_SQUARE] = *Wavetable_create(WAVEFORM_SQUARE, TABLE_SIZE);
     state->wts[WAVEFORM_TRIANGLE] = *Wavetable_create(WAVEFORM_TRIANGLE, TABLE_SIZE);
     return state;
 }
 
 void State_destroy(State *state) {
-    if (!state) return;
+    if (!state)
+        return;
     for (int i = 0; i < NUM_WAVETABLES; i++) {
         Wavetable_destroy(&state->wts[i]);
     }
@@ -48,7 +49,8 @@ void State_destroy(State *state) {
 }
 
 void State_set_note(State *state, int voice, double freq) {
-    if (voice < 0 || voice >= NUM_VOICES) return;
+    if (voice < 0 || voice >= NUM_VOICES)
+        return;
     state->active[voice] = 1;
     for (int i = 0; i < NUM_OSCS; i++) {
         int idx = voice * NUM_OSCS + i;
@@ -58,7 +60,8 @@ void State_set_note(State *state, int voice, double freq) {
 }
 
 void State_clear_voice(State *state, int voice) {
-    if (voice < 0 || voice >= NUM_VOICES) return;
+    if (voice < 0 || voice >= NUM_VOICES)
+        return;
     state->active[voice] = 0;
     for (int i = 0; i < NUM_OSCS; i++) {
         int idx = voice * NUM_OSCS + i;

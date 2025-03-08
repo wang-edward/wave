@@ -1,11 +1,11 @@
+#include "config.h"
+#include "state.h"
 #include <math.h>
 #include <pthread.h>
 #include <raylib.h>
 #include <soundio/soundio.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
-#include "state.h"
 
 static pthread_mutex_t state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -83,21 +83,21 @@ typedef struct {
 #define NUM_NOTE_KEYS (NUM_WHITE_KEYS + NUM_BLACK_KEYS)
 
 const NoteMapping white_keys[NUM_WHITE_KEYS] = {
-    { KEY_A, 0 },   // C3
-    { KEY_S, 2 },   // D3
-    { KEY_D, 4 },   // E3
-    { KEY_F, 5 },   // F3
-    { KEY_G, 7 },   // G3
-    { KEY_H, 9 },   // A3
-    { KEY_J, 11 }   // B3
+    {KEY_A, 0}, // C3
+    {KEY_S, 2}, // D3
+    {KEY_D, 4}, // E3
+    {KEY_F, 5}, // F3
+    {KEY_G, 7}, // G3
+    {KEY_H, 9}, // A3
+    {KEY_J, 11} // B3
 };
 
 const NoteMapping black_keys[NUM_BLACK_KEYS] = {
-    { KEY_W, 1 },   // C♯3
-    { KEY_E, 3 },   // D♯3
-    { KEY_T, 6 },   // F♯3
-    { KEY_Y, 8 },   // G♯3
-    { KEY_U, 10 }   // A♯3
+    {KEY_W, 1}, // C♯3
+    {KEY_E, 3}, // D♯3
+    {KEY_T, 6}, // F♯3
+    {KEY_Y, 8}, // G♯3
+    {KEY_U, 10} // A♯3
 };
 
 // Active voice mapping for each note key (-1 indicates no active voice).
@@ -115,14 +115,26 @@ int main(void) {
 
     // Initialize SoundIo.
     struct SoundIo *soundio = soundio_create();
-    if (!soundio) { fprintf(stderr, "Out of memory.\n"); return 1; }
+    if (!soundio) {
+        fprintf(stderr, "Out of memory.\n");
+        return 1;
+    }
     int err = soundio_connect(soundio);
-    if (err) { fprintf(stderr, "Error connecting: %s\n", soundio_strerror(err)); return 1; }
+    if (err) {
+        fprintf(stderr, "Error connecting: %s\n", soundio_strerror(err));
+        return 1;
+    }
     soundio_flush_events(soundio);
     int default_out_device_index = soundio_default_output_device_index(soundio);
-    if (default_out_device_index < 0) { fprintf(stderr, "No output device found.\n"); return 1; }
+    if (default_out_device_index < 0) {
+        fprintf(stderr, "No output device found.\n");
+        return 1;
+    }
     struct SoundIoDevice *device = soundio_get_output_device(soundio, default_out_device_index);
-    if (!device) { fprintf(stderr, "Unable to get output device.\n"); return 1; }
+    if (!device) {
+        fprintf(stderr, "Unable to get output device.\n");
+        return 1;
+    }
     printf("Using output device: %s\n", device->name);
 
     // Create and configure output stream.
@@ -146,11 +158,17 @@ int main(void) {
     outstream->userdata = state;
     outstream->write_callback = write_callback;
     err = soundio_outstream_open(outstream);
-    if (err) { fprintf(stderr, "Error opening stream: %s\n", soundio_strerror(err)); return 1; }
+    if (err) {
+        fprintf(stderr, "Error opening stream: %s\n", soundio_strerror(err));
+        return 1;
+    }
     if (outstream->layout_error)
         fprintf(stderr, "Channel layout error: %s\n", soundio_strerror(outstream->layout_error));
     err = soundio_outstream_start(outstream);
-    if (err) { fprintf(stderr, "Error starting stream: %s\n", soundio_strerror(err)); return 1; }
+    if (err) {
+        fprintf(stderr, "Error starting stream: %s\n", soundio_strerror(err));
+        return 1;
+    }
 
     // Initialize Raylib window.
     InitWindow(640, 480, "wave");
@@ -190,14 +208,22 @@ int main(void) {
             }
         }
         // Process wavetable level adjustments.
-        if (IsKeyPressed(KEY_ONE)) state->wt_levels[0] += 0.1f;
-        if (IsKeyPressed(KEY_TWO)) state->wt_levels[0] -= 0.1f;
-        if (IsKeyPressed(KEY_THREE)) state->wt_levels[1] += 0.1f;
-        if (IsKeyPressed(KEY_FOUR)) state->wt_levels[1] -= 0.1f;
-        if (IsKeyPressed(KEY_FIVE)) state->wt_levels[2] += 0.1f;
-        if (IsKeyPressed(KEY_SIX)) state->wt_levels[2] -= 0.1f;
-        if (IsKeyPressed(KEY_SEVEN)) state->wt_levels[3] += 0.1f;
-        if (IsKeyPressed(KEY_EIGHT)) state->wt_levels[3] -= 0.1f;
+        if (IsKeyPressed(KEY_ONE))
+            state->wt_levels[0] += 0.1f;
+        if (IsKeyPressed(KEY_TWO))
+            state->wt_levels[0] -= 0.1f;
+        if (IsKeyPressed(KEY_THREE))
+            state->wt_levels[1] += 0.1f;
+        if (IsKeyPressed(KEY_FOUR))
+            state->wt_levels[1] -= 0.1f;
+        if (IsKeyPressed(KEY_FIVE))
+            state->wt_levels[2] += 0.1f;
+        if (IsKeyPressed(KEY_SIX))
+            state->wt_levels[2] -= 0.1f;
+        if (IsKeyPressed(KEY_SEVEN))
+            state->wt_levels[3] += 0.1f;
+        if (IsKeyPressed(KEY_EIGHT))
+            state->wt_levels[3] -= 0.1f;
         // Clamp levels to [0.0, 1.0]
         state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
         state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
@@ -230,11 +256,11 @@ int main(void) {
             float x = preview_x + ((float)i / (PREVIEW_SIZE - 1)) * preview_width;
             // Scale factor: assume maximum amplitude is roughly 5.0 (the gain factor)
             float scale = preview_height / 10.0f;
-            float y = preview_y + preview_height/2 - localPreview[i] * scale;
-            points[i] = (Vector2){ x, y };
+            float y = preview_y + preview_height / 2 - localPreview[i] * scale;
+            points[i] = (Vector2){x, y};
         }
         for (int i = 0; i < PREVIEW_SIZE - 1; i++) {
-            DrawLineEx(points[i], points[i+1], 3.0f, RED);
+            DrawLineEx(points[i], points[i + 1], 3.0f, RED);
         }
 
         // --- Draw wavetable level bars and labels ---
