@@ -189,6 +189,11 @@ int main(void) {
         if (IsKeyPressed(KEY_SIX)) state->wt_levels[2] -= 0.1f;
         if (IsKeyPressed(KEY_SEVEN)) state->wt_levels[3] += 0.1f;
         if (IsKeyPressed(KEY_EIGHT)) state->wt_levels[3] -= 0.1f;
+        // Clamp each level to the range [0.0, 1.0].
+        state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
+        state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
+        state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
+        state->wt_levels[3] = fmaxf(0.0f, fminf(state->wt_levels[3], 1.0f));
         pthread_mutex_unlock(&state_mutex);
 
         BeginDrawing();
@@ -196,6 +201,25 @@ int main(void) {
         DrawText("White keys (C3 to B3): A, S, D, F, G, H, J", 10, 10, 20, DARKGRAY);
         DrawText("Black keys (C#3, D#3, F#3, G#3, A#3): W, E, T, Y, U", 10, 40, 20, DARKGRAY);
         DrawText("Adjust Levels: 1/2 for wt[0], 3/4 for wt[1], 5/6 for wt[2], 7/8 for wt[3]", 10, 70, 20, DARKGRAY);
+
+        // Draw wavetable level bars.
+        const int bar_width = 50;
+        const int bar_height = 100;
+        const int bar_spacing = 20;
+        int bar_x = 10;
+        int bar_y = GetScreenHeight() - bar_height - 10;
+        for (int i = 0; i < NUM_WAVETABLES; i++) {
+            // Draw outline rectangle.
+            DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, BLACK);
+            // Determine filled height (from bottom up).
+            int fill_height = (int)(state->wt_levels[i] * bar_height);
+            DrawRectangle(bar_x, bar_y + (bar_height - fill_height), bar_width, fill_height, GREEN);
+            // Display the level value above the bar.
+            char level_text[16];
+            sprintf(level_text, "%.1f", state->wt_levels[i]);
+            DrawText(level_text, bar_x, bar_y - 20, 20, DARKGRAY);
+            bar_x += bar_width + bar_spacing;
+        }
         EndDrawing();
     }
 
