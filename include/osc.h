@@ -1,15 +1,16 @@
 #pragma once
-#include "vec.h"
-#include "wavetable.h"
+#include "config.h"
 
 typedef struct {
     double phase;     // current phase (in table index units)
     double phase_inc; // phase increment per sample
-    Wavetable *wt;    // pointer to this oscillator's wavetable
+    int wt_index;     // index into the shared wavetable array
 } Osc;
 
-Osc *Osc_create(Waveform type, size_t length, double freq);
-void Osc_set_freq(Osc *osc, double freq);
-void Osc_destroy(Osc *osc);
+// Create an oscillator (here, allocation is done in State_create)
+Osc Osc_create(int wt_index, double freq);
 
-DECLARE_VEC_TYPE(Osc *, OscPtr, (ElemDestroyFunc)Osc_destroy)
+// Update an oscillator's frequency.
+void Osc_set_freq(Osc *osc, double freq);
+
+// (No Osc_destroy is needed since the array is owned by State.)
