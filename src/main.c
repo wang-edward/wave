@@ -1,5 +1,6 @@
 #include "config.h"
 #include "state.h"
+#include "filter.h"
 #include <math.h>
 #include <pthread.h>
 #include <raylib.h>
@@ -13,6 +14,8 @@ static pthread_mutex_t state_mutex = PTHREAD_MUTEX_INITIALIZER;
 static float previewBuffer[PREVIEW_SIZE] = {0};
 static int previewIndex = 0;
 static pthread_mutex_t preview_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+BiquadFilter lowpass_filter;
 
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min,
                            int frame_count_max) {
@@ -33,6 +36,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             float sample = 0.0f;
             pthread_mutex_lock(&state_mutex);
             sample = State_mix_sample(state);
+            sample = Biquad_process(&lowpass_filter, sample);
             pthread_mutex_unlock(&state_mutex);
             // Write sample to the preview buffer (using trylock to minimize blocking)
             if (pthread_mutex_trylock(&preview_mutex) == 0) {
@@ -112,6 +116,8 @@ int main(void) {
     // Base frequency for C3.
     const double base_freq = 130.81;
     const double semitone_ratio = pow(2.0, 1.0 / 12.0);
+
+    Biquad_design_lowpass(&lowpass_filter, 44100 , 10000, 1);
 
     // Initialize SoundIo.
     struct SoundIo *soundio = soundio_create();
