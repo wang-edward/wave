@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 Wavetable *Wavetable_create(Waveform type, size_t length) {
     assert(length > 0);
@@ -44,4 +45,27 @@ void Wavetable_destroy(Wavetable *wt) {
         return;
     free(wt->data);
     free(wt);
+}
+
+int Wavetable_load(Wavetable *wt, const char *filename) {
+    FILE *f = fopen(filename, "rb");
+    if (!f) return -1;
+    uint32_t length;
+    if (fread(&length, sizeof(uint32_t), 1, f) != 1) {
+        fclose(f);
+        return -1;
+    }
+    wt->length = length;
+    wt->data = (float*)malloc(length * sizeof(float));
+    if (!wt->data) {
+        fclose(f);
+        return -1;
+    }
+    if (fread(wt->data, sizeof(float), length, f) != length) {
+        free(wt->data);
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
 }
