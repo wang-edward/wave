@@ -179,59 +179,77 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         pthread_mutex_lock(&state_mutex);
-        // Process white keys.
-        for (int i = 0; i < NUM_WHITE_KEYS; i++) {
-            if (IsKeyDown(white_keys[i].key)) {
-                if (active_voice[i] == -1) {
-                    double freq = base_freq * pow(semitone_ratio, white_keys[i].semitone_offset);
-                    active_voice[i] = i;
-                    State_set_note(state, active_voice[i], freq);
-                }
-            } else {
-                if (active_voice[i] != -1) {
-                    State_clear_voice(state, active_voice[i]);
-                    active_voice[i] = -1;
-                }
-            }
-        }
-        // Process black keys.
-        for (int i = 0; i < NUM_BLACK_KEYS; i++) {
-            int voice_index = i + NUM_WHITE_KEYS;
-            if (IsKeyDown(black_keys[i].key)) {
-                if (active_voice[voice_index] == -1) {
-                    double freq = base_freq * pow(semitone_ratio, black_keys[i].semitone_offset);
-                    active_voice[voice_index] = voice_index;
-                    State_set_note(state, active_voice[voice_index], freq);
-                }
-            } else {
-                if (active_voice[voice_index] != -1) {
-                    State_clear_voice(state, active_voice[voice_index]);
-                    active_voice[voice_index] = -1;
+        {
+            // Process white keys.
+            for (int i = 0; i < NUM_WHITE_KEYS; i++) {
+                if (IsKeyDown(white_keys[i].key)) {
+                    if (active_voice[i] == -1) {
+                        double freq = base_freq * pow(semitone_ratio, white_keys[i].semitone_offset);
+                        active_voice[i] = i;
+                        State_set_note(state, active_voice[i], freq);
+                    }
+                } else {
+                    if (active_voice[i] != -1) {
+                        State_clear_voice(state, active_voice[i]);
+                        active_voice[i] = -1;
+                    }
                 }
             }
+            // Process black keys.
+            for (int i = 0; i < NUM_BLACK_KEYS; i++) {
+                int voice_index = i + NUM_WHITE_KEYS;
+                if (IsKeyDown(black_keys[i].key)) {
+                    if (active_voice[voice_index] == -1) {
+                        double freq = base_freq * pow(semitone_ratio, black_keys[i].semitone_offset);
+                        active_voice[voice_index] = voice_index;
+                        State_set_note(state, active_voice[voice_index], freq);
+                    }
+                } else {
+                    if (active_voice[voice_index] != -1) {
+                        State_clear_voice(state, active_voice[voice_index]);
+                        active_voice[voice_index] = -1;
+                    }
+                }
+            }
+            // Process wavetable level adjustments.
+            if (IsKeyPressed(KEY_ONE))
+                state->wt_levels[0] -= 0.1f;
+            if (IsKeyPressed(KEY_TWO))
+                state->wt_levels[0] += 0.1f;
+            if (IsKeyPressed(KEY_THREE))
+                state->wt_levels[1] -= 0.1f;
+            if (IsKeyPressed(KEY_FOUR))
+                state->wt_levels[1] += 0.1f;
+            if (IsKeyPressed(KEY_FIVE))
+                state->wt_levels[2] -= 0.1f;
+            if (IsKeyPressed(KEY_SIX))
+                state->wt_levels[2] += 0.1f;
+            if (IsKeyPressed(KEY_SEVEN))
+                state->wt_levels[3] -= 0.1f;
+            if (IsKeyPressed(KEY_EIGHT))
+                state->wt_levels[3] += 0.1f;
+            if (IsKeyPressed(KEY_MINUS)) {
+                printf("-: %f\n", state->lpf.cutoff);
+                Lowpass_set_cutoff(&state->lpf, clamp_SR(state->lpf.cutoff * 0.9));
+            }
+            if (IsKeyPressed(KEY_EQUAL)) {
+                printf("=: %f\n", state->lpf.cutoff);
+                Lowpass_set_cutoff(&state->lpf, clamp_SR(state->lpf.cutoff * 1.1));
+            }
+            if (IsKeyPressed(KEY_LEFT_BRACKET)) {
+                printf("[: %f\n", state->lpf.q);
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q + 0.1));
+            }
+            if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
+                printf("]: %f\n", state->lpf.q);
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q - 0.1));
+            }
+            // Clamp levels to [0.0, 1.0]
+            state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
+            state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
+            state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
+            state->wt_levels[3] = fmaxf(0.0f, fminf(state->wt_levels[3], 1.0f));
         }
-        // Process wavetable level adjustments.
-        if (IsKeyPressed(KEY_ONE))
-            state->wt_levels[0] += 0.1f;
-        if (IsKeyPressed(KEY_TWO))
-            state->wt_levels[0] -= 0.1f;
-        if (IsKeyPressed(KEY_THREE))
-            state->wt_levels[1] += 0.1f;
-        if (IsKeyPressed(KEY_FOUR))
-            state->wt_levels[1] -= 0.1f;
-        if (IsKeyPressed(KEY_FIVE))
-            state->wt_levels[2] += 0.1f;
-        if (IsKeyPressed(KEY_SIX))
-            state->wt_levels[2] -= 0.1f;
-        if (IsKeyPressed(KEY_SEVEN))
-            state->wt_levels[3] += 0.1f;
-        if (IsKeyPressed(KEY_EIGHT))
-            state->wt_levels[3] -= 0.1f;
-        // Clamp levels to [0.0, 1.0]
-        state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
-        state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
-        state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
-        state->wt_levels[3] = fmaxf(0.0f, fminf(state->wt_levels[3], 1.0f));
         pthread_mutex_unlock(&state_mutex);
 
         BeginDrawing();
