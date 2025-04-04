@@ -1,5 +1,7 @@
 #include "config.h"
 #include "state.h"
+#include "filter.h"
+#include "graphics.h"
 #include <math.h>
 #include <pthread.h>
 #include <raylib.h>
@@ -33,6 +35,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             float sample = 0.0f;
             pthread_mutex_lock(&state_mutex);
             sample = State_mix_sample(state);
+            sample = Lowpass_process(&state->lpf, sample);
             pthread_mutex_unlock(&state_mutex);
             // Write sample to the preview buffer (using trylock to minimize blocking)
             if (pthread_mutex_trylock(&preview_mutex) == 0) {
@@ -114,6 +117,7 @@ int main(void) {
     const double semitone_ratio = pow(2.0, 1.0 / 12.0);
 
     // Initialize SoundIo.
+
     struct SoundIo *soundio = soundio_create();
     if (!soundio) {
         fprintf(stderr, "Out of memory.\n");
@@ -176,59 +180,77 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         pthread_mutex_lock(&state_mutex);
-        // Process white keys.
-        for (int i = 0; i < NUM_WHITE_KEYS; i++) {
-            if (IsKeyDown(white_keys[i].key)) {
-                if (active_voice[i] == -1) {
-                    double freq = base_freq * pow(semitone_ratio, white_keys[i].semitone_offset);
-                    active_voice[i] = i;
-                    State_set_note(state, active_voice[i], freq);
-                }
-            } else {
-                if (active_voice[i] != -1) {
-                    State_clear_voice(state, active_voice[i]);
-                    active_voice[i] = -1;
-                }
-            }
-        }
-        // Process black keys.
-        for (int i = 0; i < NUM_BLACK_KEYS; i++) {
-            int voice_index = i + NUM_WHITE_KEYS;
-            if (IsKeyDown(black_keys[i].key)) {
-                if (active_voice[voice_index] == -1) {
-                    double freq = base_freq * pow(semitone_ratio, black_keys[i].semitone_offset);
-                    active_voice[voice_index] = voice_index;
-                    State_set_note(state, active_voice[voice_index], freq);
-                }
-            } else {
-                if (active_voice[voice_index] != -1) {
-                    State_clear_voice(state, active_voice[voice_index]);
-                    active_voice[voice_index] = -1;
+        {
+            // Process white keys.
+            for (int i = 0; i < NUM_WHITE_KEYS; i++) {
+                if (IsKeyDown(white_keys[i].key)) {
+                    if (active_voice[i] == -1) {
+                        double freq = base_freq * pow(semitone_ratio, white_keys[i].semitone_offset);
+                        active_voice[i] = i;
+                        State_set_note(state, active_voice[i], freq);
+                    }
+                } else {
+                    if (active_voice[i] != -1) {
+                        State_clear_voice(state, active_voice[i]);
+                        active_voice[i] = -1;
+                    }
                 }
             }
+            // Process black keys.
+            for (int i = 0; i < NUM_BLACK_KEYS; i++) {
+                int voice_index = i + NUM_WHITE_KEYS;
+                if (IsKeyDown(black_keys[i].key)) {
+                    if (active_voice[voice_index] == -1) {
+                        double freq = base_freq * pow(semitone_ratio, black_keys[i].semitone_offset);
+                        active_voice[voice_index] = voice_index;
+                        State_set_note(state, active_voice[voice_index], freq);
+                    }
+                } else {
+                    if (active_voice[voice_index] != -1) {
+                        State_clear_voice(state, active_voice[voice_index]);
+                        active_voice[voice_index] = -1;
+                    }
+                }
+            }
+            // Process wavetable level adjustments.
+            if (IsKeyPressed(KEY_ONE))
+                state->wt_levels[0] -= 0.1f;
+            if (IsKeyPressed(KEY_TWO))
+                state->wt_levels[0] += 0.1f;
+            if (IsKeyPressed(KEY_THREE))
+                state->wt_levels[1] -= 0.1f;
+            if (IsKeyPressed(KEY_FOUR))
+                state->wt_levels[1] += 0.1f;
+            if (IsKeyPressed(KEY_FIVE))
+                state->wt_levels[2] -= 0.1f;
+            if (IsKeyPressed(KEY_SIX))
+                state->wt_levels[2] += 0.1f;
+            if (IsKeyPressed(KEY_SEVEN))
+                state->wt_levels[3] -= 0.1f;
+            if (IsKeyPressed(KEY_EIGHT))
+                state->wt_levels[3] += 0.1f;
+            if (IsKeyPressed(KEY_MINUS)) {
+                printf("-: %f\n", state->lpf.cutoff);
+                Lowpass_set_cutoff(&state->lpf, clamp_SR(state->lpf.cutoff * 0.9));
+            }
+            if (IsKeyPressed(KEY_EQUAL)) {
+                printf("=: %f\n", state->lpf.cutoff);
+                Lowpass_set_cutoff(&state->lpf, clamp_SR(state->lpf.cutoff * 1.1));
+            }
+            if (IsKeyPressed(KEY_LEFT_BRACKET)) {
+                printf("[: %f\n", state->lpf.q);
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q - 0.1)+ 0.01);
+            }
+            if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
+                printf("]: %f\n", state->lpf.q);
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q + 0.1) + 0.01);
+            }
+            // Clamp levels to [0.0, 1.0]
+            state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
+            state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
+            state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
+            state->wt_levels[3] = fmaxf(0.0f, fminf(state->wt_levels[3], 1.0f));
         }
-        // Process wavetable level adjustments.
-        if (IsKeyPressed(KEY_ONE))
-            state->wt_levels[0] += 0.1f;
-        if (IsKeyPressed(KEY_TWO))
-            state->wt_levels[0] -= 0.1f;
-        if (IsKeyPressed(KEY_THREE))
-            state->wt_levels[1] += 0.1f;
-        if (IsKeyPressed(KEY_FOUR))
-            state->wt_levels[1] -= 0.1f;
-        if (IsKeyPressed(KEY_FIVE))
-            state->wt_levels[2] += 0.1f;
-        if (IsKeyPressed(KEY_SIX))
-            state->wt_levels[2] -= 0.1f;
-        if (IsKeyPressed(KEY_SEVEN))
-            state->wt_levels[3] += 0.1f;
-        if (IsKeyPressed(KEY_EIGHT))
-            state->wt_levels[3] -= 0.1f;
-        // Clamp levels to [0.0, 1.0]
-        state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
-        state->wt_levels[1] = fmaxf(0.0f, fminf(state->wt_levels[1], 1.0f));
-        state->wt_levels[2] = fmaxf(0.0f, fminf(state->wt_levels[2], 1.0f));
-        state->wt_levels[3] = fmaxf(0.0f, fminf(state->wt_levels[3], 1.0f));
         pthread_mutex_unlock(&state_mutex);
 
         BeginDrawing();
@@ -269,27 +291,18 @@ int main(void) {
         const int bar_spacing = 20;
         int bar_x = 10;
         int bar_y = GetScreenHeight() - bar_height - 20;
-        for (int i = 0; i < NUM_WAVETABLES; i++) {
-            DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, BLACK);
-            int fill_height = (int)(state->wt_levels[i] * bar_height);
-            DrawRectangle(bar_x, bar_y + (bar_height - fill_height), bar_width, fill_height, GREEN);
-            // Draw waveform label.
-            char name_text[16];
-            if (i == 0)
-                sprintf(name_text, "SIN");
-            else if (i == 1)
-                sprintf(name_text, "SAW");
-            else if (i == 2)
-                sprintf(name_text, "SQR");
-            else if (i == 3)
-                sprintf(name_text, "TRI");
-            DrawText(name_text, bar_x, bar_y + bar_height, 20, DARKGRAY);
-            // Draw level text.
-            char level_text[16];
-            sprintf(level_text, "%.1f", state->wt_levels[i]);
-            DrawText(level_text, bar_x, bar_y - 20, 20, DARKGRAY);
-            bar_x += bar_width + bar_spacing;
-        }
+        
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[0], "SIN");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[1], "SAW");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[2], "SQR");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[3], "TRI");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, scale_unit(state->lpf.cutoff, 20.0f, 20000.0f), "FREQ");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, scale_unit(state->lpf.q, 0.0f, 1.0f), "Q");
 
         EndDrawing();
     }

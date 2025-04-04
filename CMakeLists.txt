@@ -52,7 +52,7 @@ target_include_directories(unit_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
 # target_compile_definitions(unit_tests PRIVATE PLATFORM_DESKTOP)
 
 # Link against the Criterion library and other system libraries
-target_link_libraries(unit_tests criterion m pthread)
+target_link_libraries(unit_tests raylib criterion m pthread)
 
 # Register the unit tests with CTest
 add_test(NAME unit_tests COMMAND unit_tests)

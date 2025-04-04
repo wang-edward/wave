@@ -1,6 +1,7 @@
 #pragma once
 #include "osc.h"
 #include "wavetable.h"
+#include "filter.h"
 
 // Fixed constants.
 extern const int NUM_OSCS;       // oscillators per voice (e.g., 4)
@@ -12,6 +13,7 @@ typedef struct {
     Wavetable *wts;   // shared array of NUM_WAVETABLES wavetables
     float *wt_levels; // per-wavetable level multipliers; array of NUM_WAVETABLES floats
     int *active;      // for each voice (size NUM_VOICES), 1 if active, 0 if not
+    LowpassFilter lpf;
 } State;
 
 State *State_create(void);
