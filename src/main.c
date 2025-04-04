@@ -113,7 +113,7 @@ int main(void) {
         active_voice[i] = -1;
     }
     // Base frequency for C3.
-    const double base_freq = 65.41;
+    const double base_freq = 130.81;
     const double semitone_ratio = pow(2.0, 1.0 / 12.0);
 
     // Initialize SoundIo.
