@@ -8,3 +8,4 @@
 
 float clamp_SR(float freq); // SR = sample rate
 float clamp_unit(float value);
+float scale_unit(float value, float min, float max);

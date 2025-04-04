@@ -15,3 +15,7 @@ float clamp_unit(float value) {
         return 1.0f;
     return value;
 }
+
+float scale_unit(float value, float min, float max) {
+    return value / (max - min);
+}
