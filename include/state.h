@@ -13,7 +13,7 @@ typedef struct {
     Wavetable *wts;   // shared array of NUM_WAVETABLES wavetables
     float *wt_levels; // per-wavetable level multipliers; array of NUM_WAVETABLES floats
     int *active;      // for each voice (size NUM_VOICES), 1 if active, 0 if not
-    BiquadFilter lowpass_filter;
+    LowpassFilter lpf;
 } State;
 
 State *State_create(void);

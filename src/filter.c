@@ -66,6 +66,12 @@ void Biquad_design_highpass(BiquadFilter *filter, float cutoff, float Q) {
     filter->z2 = 0.0f;
 }
 
+void Lowpass_init(LowpassFilter *filter) {
+    filter->cutoff = 20000;
+    filter->q = 1;
+    Biquad_design_lowpass(&filter->biquad, filter->cutoff, filter->q);
+}
+
 float Lowpass_process(LowpassFilter *filter, float input) {
     return Biquad_process(&filter->biquad, input);
 }
@@ -75,6 +81,7 @@ void Lowpass_set_cutoff(LowpassFilter *filter, float cutoff) {
     Biquad_design_lowpass(&filter->biquad, filter->cutoff, filter->q);
 }
 
-void Lowpass_set_q(LowpassFilter *filter, float Q) {
-    
+void Lowpass_set_q(LowpassFilter *filter, float q) {
+    filter->q = q;
+    Biquad_design_lowpass(&filter->biquad, filter->cutoff, filter->q);
 }

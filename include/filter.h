@@ -17,6 +17,7 @@ typedef struct {
     float q;
 } LowpassFilter;
 
+void Lowpass_init(LowpassFilter *filter);
 float Lowpass_process(LowpassFilter *filter, float input);
 void Lowpass_set_cutoff(LowpassFilter *filter, float cutoff);
-void Lowpass_set_q(LowpassFilter *filter, float Q);
+void Lowpass_set_q(LowpassFilter *filter, float q);

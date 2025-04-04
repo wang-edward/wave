@@ -34,7 +34,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
             float sample = 0.0f;
             pthread_mutex_lock(&state_mutex);
             sample = State_mix_sample(state);
-            sample = Biquad_process(&state->lowpass_filter, sample);
+            sample = Lowpass_process(&state->lpf, sample);
             pthread_mutex_unlock(&state_mutex);
             // Write sample to the preview buffer (using trylock to minimize blocking)
             if (pthread_mutex_trylock(&preview_mutex) == 0) {
@@ -114,8 +114,6 @@ int main(void) {
     // Base frequency for C3.
     const double base_freq = 130.81;
     const double semitone_ratio = pow(2.0, 1.0 / 12.0);
-
-    Biquad_design_lowpass(&state->lowpass_filter, SAMPLE_RATE, 10000, 1);
 
     // Initialize SoundIo.
 

@@ -1,5 +1,6 @@
 #include "state.h"
 #include "config.h"
+#include "filter.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -32,6 +33,8 @@ State *State_create(void) {
     state->wts[WAVEFORM_SAW] = *Wavetable_create(WAVEFORM_SAW, TABLE_SIZE);
     state->wts[WAVEFORM_SQUARE] = *Wavetable_create(WAVEFORM_SQUARE, TABLE_SIZE);
     state->wts[WAVEFORM_TRIANGLE] = *Wavetable_create(WAVEFORM_TRIANGLE, TABLE_SIZE);
+
+    Lowpass_init(&state->lpf);
     return state;
 }
 
