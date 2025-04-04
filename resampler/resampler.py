@@ -131,7 +131,7 @@ def main():
     # If no output filename is provided, convert the input filename to .bin
     if not args.output:
         base, _ = os.path.splitext(os.path.basename(args.audio_file))
-        args.output = base + ".bin"
+        args.output = "bin_samples/" + base + ".bin"
 
     # Plot analysis of the original audio
     y_orig, sr_orig = librosa.load(args.audio_file, sr=None, mono=True)
