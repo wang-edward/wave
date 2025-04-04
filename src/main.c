@@ -1,6 +1,7 @@
 #include "config.h"
 #include "state.h"
 #include "filter.h"
+#include "graphics.h"
 #include <math.h>
 #include <pthread.h>
 #include <raylib.h>
@@ -238,11 +239,11 @@ int main(void) {
             }
             if (IsKeyPressed(KEY_LEFT_BRACKET)) {
                 printf("[: %f\n", state->lpf.q);
-                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q + 0.1));
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q - 0.1)+ 0.01);
             }
             if (IsKeyPressed(KEY_RIGHT_BRACKET)) {
                 printf("]: %f\n", state->lpf.q);
-                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q - 0.1));
+                Lowpass_set_q(&state->lpf, clamp_unit(state->lpf.q + 0.1) + 0.01);
             }
             // Clamp levels to [0.0, 1.0]
             state->wt_levels[0] = fmaxf(0.0f, fminf(state->wt_levels[0], 1.0f));
@@ -290,27 +291,18 @@ int main(void) {
         const int bar_spacing = 20;
         int bar_x = 10;
         int bar_y = GetScreenHeight() - bar_height - 20;
-        for (int i = 0; i < NUM_WAVETABLES; i++) {
-            DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, BLACK);
-            int fill_height = (int)(state->wt_levels[i] * bar_height);
-            DrawRectangle(bar_x, bar_y + (bar_height - fill_height), bar_width, fill_height, GREEN);
-            // Draw waveform label.
-            char name_text[16];
-            if (i == 0)
-                sprintf(name_text, "SIN");
-            else if (i == 1)
-                sprintf(name_text, "SAW");
-            else if (i == 2)
-                sprintf(name_text, "SQR");
-            else if (i == 3)
-                sprintf(name_text, "TRI");
-            DrawText(name_text, bar_x, bar_y + bar_height, 20, DARKGRAY);
-            // Draw level text.
-            char level_text[16];
-            sprintf(level_text, "%.1f", state->wt_levels[i]);
-            DrawText(level_text, bar_x, bar_y - 20, 20, DARKGRAY);
-            bar_x += bar_width + bar_spacing;
-        }
+        
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[0], "SIN");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[1], "SAW");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[2], "SQR");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, state->wt_levels[3], "TRI");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, scale_unit(state->lpf.cutoff, 20.0f, 20000.0f), "FREQ");
+        bar_x += bar_width + bar_spacing;
+        DrawSlider(bar_x, bar_y, bar_width, bar_height, scale_unit(state->lpf.q, 0.0f, 1.0f), "Q");
 
         EndDrawing();
     }
