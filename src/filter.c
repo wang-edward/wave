@@ -1,5 +1,6 @@
 #include <math.h>
 #include "filter.h"
+#include "config.h"
 
 // Initialize the biquad filter
 void Biquad_init(BiquadFilter *filter, float b0, float b1, float b2, float a1, float a2) {
@@ -12,7 +13,6 @@ void Biquad_init(BiquadFilter *filter, float b0, float b1, float b2, float a1, f
     filter->z2 = 0.0f;
 }
 
-// Process a single sample through the biquad filter
 float Biquad_process(BiquadFilter *filter, float input) {
     float output = filter->b0 * input + filter->z1;
     filter->z1 = filter->b1 * input + filter->z2 - filter->a1 * output;
@@ -20,9 +20,8 @@ float Biquad_process(BiquadFilter *filter, float input) {
     return output;
 }
 
-// Configure filter as a low-pass
-void Biquad_design_lowpass(BiquadFilter *filter, float sampleRate, float cutoff, float Q) {
-    float omega = 2.0f * M_PI * cutoff / sampleRate;
+void Biquad_design_lowpass(BiquadFilter *filter, float cutoff, float Q) {
+    float omega = 2.0f * M_PI * cutoff / SAMPLE_RATE;
     float sn = sinf(omega);
     float cs = cosf(omega);
     float alpha = sn / (2.0f * Q);
@@ -44,9 +43,8 @@ void Biquad_design_lowpass(BiquadFilter *filter, float sampleRate, float cutoff,
     filter->z2 = 0.0f;
 }
 
-// Configure filter as a high-pass
-void Biquad_design_highpass(BiquadFilter *filter, float sampleRate, float cutoff, float Q) {
-    float omega = 2.0f * M_PI * cutoff / sampleRate;
+void Biquad_design_highpass(BiquadFilter *filter, float cutoff, float Q) {
+    float omega = 2.0f * M_PI * cutoff / SAMPLE_RATE;
     float sn = sinf(omega);
     float cs = cosf(omega);
     float alpha = sn / (2.0f * Q);
@@ -66,4 +64,17 @@ void Biquad_design_highpass(BiquadFilter *filter, float sampleRate, float cutoff
     // Reset state variables
     filter->z1 = 0.0f;
     filter->z2 = 0.0f;
+}
+
+float Lowpass_process(LowpassFilter *filter, float input) {
+    return Biquad_process(&filter->biquad, input);
+}
+
+void Lowpass_set_cutoff(LowpassFilter *filter, float cutoff) {
+    filter->cutoff = cutoff;
+    Biquad_design_lowpass(&filter->biquad, filter->cutoff, filter->q);
+}
+
+void Lowpass_set_q(LowpassFilter *filter, float Q) {
+    
 }
