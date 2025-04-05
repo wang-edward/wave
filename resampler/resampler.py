@@ -6,6 +6,7 @@ import argparse
 import struct
 import os
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
 def normalize_audio(audio):
     """
@@ -16,7 +17,7 @@ def normalize_audio(audio):
         return audio / max_val
     return audio
 
-def extract_wavetable(audio_file, target_freq=440.0, table_size=1024):
+def extract_wavetable(audio_file, target_freq=440.0, downsample_size=512, table_size=1024):
     """
     Loads an audio file, normalizes it, trims silence, extracts one period of a tone at the
     target frequency, and resamples that cycle into a wavetable of the given table_size.
@@ -24,7 +25,8 @@ def extract_wavetable(audio_file, target_freq=440.0, table_size=1024):
     Parameters:
       audio_file (str): Path to the input audio file.
       target_freq (float): Expected frequency of the tone in Hz.
-      table_size (int): Desired wavetable size.
+      downsample_size (int): Size to downsample to before upsampling.
+      table_size (int): Final wavetable size after upsampling.
       
     Returns:
       wavetable (np.ndarray): The wavetable with table_size samples.
@@ -51,8 +53,14 @@ def extract_wavetable(audio_file, target_freq=440.0, table_size=1024):
     
     cycle = y_trimmed[start:end]
     
-    # Resample the extracted cycle to the desired table size (1024)
-    wavetable = scipy.signal.resample(cycle, table_size)
+    # First resample to the lower resolution
+    wavetable_low = scipy.signal.resample(cycle, downsample_size)
+    
+    # Then upsample using nearest neighbor interpolation
+    x_low = np.linspace(0, 1, downsample_size)
+    x_high = np.linspace(0, 1, table_size)
+    f_upsample = interpolate.interp1d(x_low, wavetable_low, kind='nearest')
+    wavetable = f_upsample(x_high)
     
     # Normalize again
     wavetable = normalize_audio(wavetable)
@@ -123,7 +131,8 @@ def main():
     )
     parser.add_argument("audio_file", type=str, help="Path to the audio file (WAV, MP3, etc.).")
     parser.add_argument("--freq", type=float, default=440.0, help="Target frequency in Hz (default: 440 Hz).")
-    parser.add_argument("--table_size", type=int, default=1024, help="Wavetable size (default: 1024).")
+    parser.add_argument("--downsample_size", type=int, default=512, help="Size to downsample to before upsampling (default: 512).")
+    parser.add_argument("--table_size", type=int, default=1024, help="Final wavetable size (default: 1024).")
     parser.add_argument("--output", type=str, default=None,
                         help="Output binary file. If not specified, uses input filename with .bin extension.")
     args = parser.parse_args()
@@ -140,22 +149,27 @@ def main():
 
     # Extract the wavetable
     try:
-        wavetable, sr = extract_wavetable(args.audio_file, target_freq=args.freq, table_size=args.table_size)
+        wavetable, sr = extract_wavetable(args.audio_file, 
+                                        target_freq=args.freq, 
+                                        downsample_size=args.downsample_size,
+                                        table_size=args.table_size)
+        
+        # Save the wavetable to a binary file
+        save_wavetable_to_binary(wavetable, args.output)
+        print("Binary wavetable saved as", args.output)
+        
+        # Plot the final wavetable
+        plt.figure(figsize=(10, 4))
+        plt.plot(wavetable)
+        plt.title(f"Extracted Wavetable (Resampled from {args.downsample_size} to {args.table_size})")
+        plt.xlabel("Sample Index")
+        plt.ylabel("Amplitude")
+        plt.grid(True)
+        plt.show()
+        
     except Exception as e:
         print("Error processing file:", e)
         return
-
-    # Save the wavetable to a binary file
-    save_wavetable_to_binary(wavetable, args.output)
-    print("Binary wavetable saved as", args.output)
-
-    plt.figure(figsize=(10, 4))
-    plt.plot(wavetable)
-    plt.title("Extracted Wavetable (Normalized)")
-    plt.xlabel("Sample Index")
-    plt.ylabel("Amplitude")
-    plt.grid(True)
-    plt.show()
 
 if __name__ == "__main__":
     main()
