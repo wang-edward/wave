@@ -34,7 +34,7 @@ State *State_create(void) {
     state->wts[WAVEFORM_SQUARE] = *Wavetable_create(WAVEFORM_SQUARE, TABLE_SIZE);
     // state->wts[WAVEFORM_TRIANGLE] = *Wavetable_create(WAVEFORM_TRIANGLE, TABLE_SIZE);
     state->wts[WAVEFORM_TRIANGLE] = *Wavetable_create(WAVEFORM_CUSTOM, TABLE_SIZE);
-    Wavetable_load(&state->wts[WAVEFORM_TRIANGLE], "Trumpet.bin");
+    Wavetable_load(&state->wts[WAVEFORM_TRIANGLE], "bin_samples/Trumpet.bin");
 
     Lowpass_init(&state->lpf);
     return state;
