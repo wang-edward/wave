@@ -17,20 +17,20 @@ def normalize_audio(audio):
         return audio / max_val
     return audio
 
-def extract_wavetable(audio_file, target_freq=440.0, downsample_size=512, table_size=1024):
+def extract_wavetable(audio_file, downsample_size=512, table_size=1024):
     """
     Loads an audio file, normalizes it, trims silence, extracts one period of a tone at the
-    target frequency, and resamples that cycle into a wavetable of the given table_size.
+    detected fundamental frequency, and resamples that cycle into a wavetable.
     
     Parameters:
       audio_file (str): Path to the input audio file.
-      target_freq (float): Expected frequency of the tone in Hz.
       downsample_size (int): Size to downsample to before upsampling.
       table_size (int): Final wavetable size after upsampling.
       
     Returns:
       wavetable (np.ndarray): The wavetable with table_size samples.
       sr (int): The sample rate of the audio file.
+      detected_freq (float): The detected fundamental frequency.
     """
     # Load the audio file (mono) and normalize immediately
     y, sr = librosa.load(audio_file, sr=None, mono=True)
@@ -39,8 +39,22 @@ def extract_wavetable(audio_file, target_freq=440.0, downsample_size=512, table_
     # Trim silence from beginning and end (adjust top_db if needed)
     y_trimmed, _ = librosa.effects.trim(y, top_db=20)
     
-    # Calculate the period length in samples for the target frequency
-    period_length = sr / target_freq
+    # Detect the fundamental frequency using PYIN
+    fmin = librosa.note_to_hz('C2')  # Lower bound for trumpet
+    fmax = librosa.note_to_hz('C7')  # Upper bound for trumpet
+    f0, voiced_flag, voiced_prob = librosa.pyin(y_trimmed, fmin=fmin, fmax=fmax)
+    
+    # Get the most common non-zero frequency
+    f0 = f0[voiced_flag]  # Only consider voiced segments
+    if len(f0) == 0:
+        raise ValueError("Could not detect a fundamental frequency in the audio.")
+    
+    # Use the median frequency to be robust against outliers
+    detected_freq = np.median(f0)
+    print(f"Detected fundamental frequency: {detected_freq:.2f} Hz")
+    
+    # Calculate the period length in samples for the detected frequency
+    period_length = sr / detected_freq
     period_samples = int(round(period_length))
     
     # Extract a cycle from the center of the trimmed audio
@@ -65,7 +79,7 @@ def extract_wavetable(audio_file, target_freq=440.0, downsample_size=512, table_
     # Normalize again
     wavetable = normalize_audio(wavetable)
     
-    return wavetable, sr
+    return wavetable, sr, detected_freq
 
 def save_wavetable_to_binary(wavetable, filename):
     """
@@ -130,7 +144,6 @@ def main():
         description="Convert an audio file into a wavetable, save as a binary file, and plot analysis graphs."
     )
     parser.add_argument("audio_file", type=str, help="Path to the audio file (WAV, MP3, etc.).")
-    parser.add_argument("--freq", type=float, default=440.0, help="Target frequency in Hz (default: 440 Hz).")
     parser.add_argument("--downsample_size", type=int, default=512, help="Size to downsample to before upsampling (default: 512).")
     parser.add_argument("--table_size", type=int, default=1024, help="Final wavetable size (default: 1024).")
     parser.add_argument("--output", type=str, default=None,
@@ -149,14 +162,14 @@ def main():
 
     # Extract the wavetable
     try:
-        wavetable, sr = extract_wavetable(args.audio_file, 
-                                        target_freq=args.freq, 
-                                        downsample_size=args.downsample_size,
-                                        table_size=args.table_size)
+        wavetable, sr, detected_freq = extract_wavetable(args.audio_file, 
+                                                        downsample_size=args.downsample_size,
+                                                        table_size=args.table_size)
         
         # Save the wavetable to a binary file
         save_wavetable_to_binary(wavetable, args.output)
-        print("Binary wavetable saved as", args.output)
+        print(f"Binary wavetable saved as {args.output}")
+        print(f"Detected note: {librosa.hz_to_note(detected_freq)} ({detected_freq:.2f} Hz)")
         
         # Plot the final wavetable
         plt.figure(figsize=(10, 4))
