@@ -65,19 +65,7 @@ def extract_wavetable(audio_file, downsample_size=512, table_size=1024):
     if start < 0 or end > len(y_trimmed):
         raise ValueError("Not enough samples in the trimmed audio to extract one period.")
     
-    cycle = y_trimmed[start:end]
-    
-    # First resample to the lower resolution
-    wavetable_low = scipy.signal.resample(cycle, downsample_size)
-    
-    # Then upsample using nearest neighbor interpolation
-    x_low = np.linspace(0, 1, downsample_size)
-    x_high = np.linspace(0, 1, table_size)
-    f_upsample = interpolate.interp1d(x_low, wavetable_low, kind='nearest')
-    wavetable = f_upsample(x_high)
-    
-    # Normalize again
-    wavetable = normalize_audio(wavetable)
+    wavetable = y_trimmed[start:end]
     
     return wavetable, sr, detected_freq
 
@@ -174,7 +162,7 @@ def main():
         # Plot the final wavetable
         plt.figure(figsize=(10, 4))
         plt.plot(wavetable)
-        plt.title(f"Extracted Wavetable (Resampled from {args.downsample_size} to {args.table_size})")
+        plt.title(f"Extracted Wavetable")
         plt.xlabel("Sample Index")
         plt.ylabel("Amplitude")
         plt.grid(True)
