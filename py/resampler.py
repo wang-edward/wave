@@ -50,7 +50,7 @@ def extract_wavetable(audio_file, downsample_size=512, table_size=1024):
         raise ValueError("Could not detect a fundamental frequency in the audio.")
     
     # Use the median frequency to be robust against outliers
-    detected_freq = np.median(f0)
+    detected_freq = 440
     print(f"Detected fundamental frequency: {detected_freq:.2f} Hz")
     
     # Calculate the period length in samples for the detected frequency

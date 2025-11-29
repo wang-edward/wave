@@ -93,6 +93,8 @@ def analyze_wavs(wav_files, output_dir):
     plt.figure(fig_fft_chord.number)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig(os.path.join(output_dir, 'fft_chord_comparison.png'), dpi=300, bbox_inches='tight')
+
+    plt.show()
     
     plt.close('all')
 

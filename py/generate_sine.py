@@ -60,4 +60,5 @@ for size in initial_resolutions:
     plt.title(f"Sine wave: {size} resolution upsampled to {final_size}")
     plt.grid(True)
     plt.savefig(f"bin_samples/sine_{size}.png")
+    plt.show()
     plt.close() 
